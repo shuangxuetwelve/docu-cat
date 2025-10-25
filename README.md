@@ -57,8 +57,9 @@ jobs:
 ```
 docu-cat/
 ├── action.yml              # GitHub Action definition
-├── detect_changes.py       # Main script for detecting PR changes
 ├── AGENTS.md              # Project guidelines and task list
+├── src/                   # Source code directory
+│   └── detect_changes.py  # Main script for detecting PR changes
 └── .github/
     └── workflows/
         └── example.yml    # Example workflow configuration

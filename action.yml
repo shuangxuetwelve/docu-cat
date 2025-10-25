@@ -23,7 +23,7 @@ runs:
     - name: Get changed files
       id: changed-files
       shell: bash
-      run: python ${{ github.action_path }}/detect_changes.py
+      run: python ${{ github.action_path }}/src/detect_changes.py
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         GITHUB_EVENT_NAME: ${{ github.event_name }}
