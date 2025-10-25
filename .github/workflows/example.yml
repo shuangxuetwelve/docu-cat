@@ -1,0 +1,26 @@
+# Example workflow showing how to use DocuCat in another repository
+# Copy this file to .github/workflows/ in your repository to use DocuCat
+
+name: DocuCat - Document Generator
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  docu-cat:
+    runs-on: ubuntu-latest
+    name: Generate/Update Documentation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git diff
+
+      - name: Run DocuCat
+        uses: ./ # Use this when testing in the DocuCat repository itself
+        # For other repositories, use:
+        # uses: lu/docu-cat@main  # or use a specific version tag
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
