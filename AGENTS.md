@@ -17,6 +17,7 @@ DocuCat is an AI assistant that generates or updates documents from changes of a
 DocuCat is in construction. You should follow the task list below to create DocuCat. Always do one incomplete task at a time.
 
 [x] Make DocuCat be able to run as a Github Action in another repository. It simply prints the changed files in a pull request.
+[x] Use `uv` to manage Python dependencies both locally and in Github Action.
 [ ] Add an entry file to run DocuCat locally.
 [ ] Add LangGraph and use Claude Haiku 4.5 to understand the intents of the changes.
 [ ] More tasks to be added...

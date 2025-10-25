@@ -52,11 +52,35 @@ jobs:
 
 ## Development
 
+### Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) - Fast Python package manager
+
+### Local Setup
+
+1. Install uv:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/lu/docu-cat.git
+   cd docu-cat
+   ```
+
+3. Run scripts using uv:
+   ```bash
+   uv run src/detect_changes.py
+   ```
+
 ### Project Structure
 
 ```
 docu-cat/
 ├── action.yml              # GitHub Action definition
+├── pyproject.toml         # Python project configuration
 ├── AGENTS.md              # Project guidelines and task list
 ├── src/                   # Source code directory
 │   └── detect_changes.py  # Main script for detecting PR changes
@@ -67,7 +91,8 @@ docu-cat/
 
 ### Implementation Details
 
-- Built with Python 3.11+
+- Built with Python 3.12+
+- Managed with uv for fast, reliable dependency management
 - Uses LangGraph for AI orchestration (planned)
 - Integrates with GitHub API for PR analysis
 
