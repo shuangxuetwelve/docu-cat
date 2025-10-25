@@ -44,11 +44,47 @@ jobs:
 
 3. Open a pull request and DocuCat will automatically run!
 
+### Running DocuCat Locally
+
+You can run DocuCat locally to analyze recent commits in any repository:
+
+1. Install uv (if not already installed):
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. Run DocuCat using uv:
+   ```bash
+   # Analyze last commit in current directory
+   uv run --no-project src/main.py
+
+   # Analyze last 5 commits
+   uv run --no-project src/main.py --count 5
+
+   # Analyze another repository
+   uv run --no-project src/main.py --path /path/to/repo --count 10
+   ```
+
+3. Or install and use the CLI command:
+   ```bash
+   # Install locally
+   uv pip install -e .
+
+   # Run from anywhere
+   docu-cat --count 5
+   docu-cat --path ../other-repo --count 10
+   ```
+
+**Command line options:**
+- `-p, --path`: Path to repository (default: current directory)
+- `-c, --count`: Number of recent commits to analyze (default: 1)
+
 ## Current Features
 
 - ✅ Detects and prints changed files in pull requests
+- ✅ Local execution mode - analyze commits in any repository
+- ✅ CLI interface with flexible options
 - 🚧 Document generation (coming soon)
-- 🚧 Local execution mode (coming soon)
 
 ## Development
 
@@ -83,7 +119,9 @@ docu-cat/
 ├── pyproject.toml         # Python project configuration
 ├── AGENTS.md              # Project guidelines and task list
 ├── src/                   # Source code directory
-│   └── detect_changes.py  # Main script for detecting PR changes
+│   ├── __init__.py        # Package initialization
+│   ├── main.py            # CLI entry point for local execution
+│   └── detect_changes.py  # GitHub Action script for PR changes
 └── .github/
     └── workflows/
         └── example.yml    # Example workflow configuration
