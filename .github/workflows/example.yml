@@ -12,11 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     name: Generate/Update Documentation
 
+    # Required permissions for DocuCat to commit and push changes
+    permissions:
+      contents: write        # Allow pushing commits
+      pull-requests: write   # Allow updating PR
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch full history for git diff
+          fetch-depth: 0  # Fetch full history for git diff
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Checkout the PR branch (head ref) to allow pushing commits
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Run DocuCat
         uses: ./ # Use this when testing in the DocuCat repository itself

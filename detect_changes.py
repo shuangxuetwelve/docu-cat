@@ -6,6 +6,7 @@ DocuCat GitHub Action - Detect and print changed files in a pull request
 import os
 import sys
 import json
+import subprocess
 import urllib.request
 import urllib.error
 
@@ -57,8 +58,6 @@ def get_changed_files_from_git(base_sha, head_sha):
     Returns:
         list: List of changed file paths
     """
-    import subprocess
-
     try:
         result = subprocess.run(
             ['git', 'diff', '--name-only', base_sha, head_sha],
@@ -71,6 +70,127 @@ def get_changed_files_from_git(base_sha, head_sha):
         print(f"Error running git diff: {e}", file=sys.stderr)
         print(f"stderr: {e.stderr}", file=sys.stderr)
         sys.exit(1)
+
+
+def configure_git():
+    """
+    Configure git user for commits.
+    Uses GitHub Actions bot identity.
+    """
+    try:
+        subprocess.run(
+            ['git', 'config', 'user.name', 'github-actions[bot]'],
+            check=True,
+            capture_output=True
+        )
+        subprocess.run(
+            ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
+            check=True,
+            capture_output=True
+        )
+        print("✓ Git user configured")
+    except subprocess.CalledProcessError as e:
+        print(f"Error configuring git: {e}", file=sys.stderr)
+        print(f"stderr: {e.stderr.decode()}", file=sys.stderr)
+        raise
+
+
+def commit_and_push_changes(documents_updated: list[str]):
+    """
+    Create a commit with updated documents and push to the PR branch.
+
+    Args:
+        documents_updated: List of document file paths that were updated
+    """
+    if not documents_updated:
+        print("No documents to commit.")
+        return
+
+    print()
+    print("=" * 60)
+    print("📝 Committing and Pushing Changes")
+    print("=" * 60)
+    print()
+
+    try:
+        # Configure git
+        configure_git()
+
+        # Stage the updated files
+        print(f"📦 Staging {len(documents_updated)} updated document(s)...")
+        for doc in documents_updated:
+            result = subprocess.run(
+                ['git', 'add', doc],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"  ✓ Staged: {doc}")
+            else:
+                print(f"  ⚠ Could not stage: {doc} (might not exist or already staged)")
+
+        # Check if there are changes to commit
+        status_result = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        if not status_result.stdout.strip():
+            print()
+            print("ℹ️  No changes to commit (files may not have been modified).")
+            return
+
+        # Create commit message
+        commit_message = """docs: Update documentation based on code changes
+
+Updated by DocuCat AI assistant based on recent code changes.
+
+Documents updated:
+"""
+        for doc in documents_updated:
+            commit_message += f"  - {doc}\n"
+
+        # Create the commit
+        print()
+        print("💾 Creating commit...")
+        subprocess.run(
+            ['git', 'commit', '-m', commit_message],
+            check=True,
+            capture_output=True
+        )
+        print("  ✓ Commit created")
+
+        # Push to the PR branch
+        print()
+        print("🚀 Pushing to PR branch...")
+        subprocess.run(
+            ['git', 'push'],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        print("  ✓ Changes pushed successfully")
+
+        print()
+        print("✅ Documentation updates have been committed and pushed to the PR!")
+        print()
+
+    except subprocess.CalledProcessError as e:
+        print()
+        print(f"❌ Error during git operations: {e}", file=sys.stderr)
+        if e.stderr:
+            print(f"   stderr: {e.stderr}", file=sys.stderr)
+        print()
+        print("⚠️  The documentation was updated locally but could not be pushed.", file=sys.stderr)
+        print("   This might be a permissions issue or the branch might be protected.", file=sys.stderr)
+        # Don't exit with error - the analysis was successful
+    except Exception as e:
+        print()
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        print()
+        print("⚠️  The documentation was updated locally but could not be pushed.", file=sys.stderr)
 
 
 def main():
@@ -152,6 +272,10 @@ def main():
             print("-" * 60)
             for doc in result['documents_updated']:
                 print(f"  ✓ {doc}")
+            print()
+
+            # Commit and push the changes back to the PR
+            commit_and_push_changes(result['documents_updated'])
         else:
             print("ℹ️  No documents were updated.")
         print()

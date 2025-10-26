@@ -25,6 +25,7 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] Add LangGraph and use Claude Haiku 4.5 to understand the intents of the changes.
 [x] Add a tool `run_command` to execute a command and get the result. Modify the LangGraph workflow to be able to call tools. Add the tool `run_command` to the agent workflow.
 [x] Identify the documents to change and make the changes. If there is no document to change, quit.
+[x] When running as a Github Action, if there is any documents changed, create a Git commit and push it back to the pull request.
 [ ] Add a command to initialize the local vector store and create embeddings for all codes and documents.
 [ ] More tasks to be added...
 
