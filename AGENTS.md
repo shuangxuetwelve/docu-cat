@@ -20,5 +20,11 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] Use `uv` to manage Python dependencies both locally and in Github Action.
 [x] Add an entry file to run DocuCat locally.
 [x] Add LangGraph and use Claude Haiku 4.5 to understand the intents of the changes.
-[ ] Add a tool `run_command` to execute a command and get the result. Modify the LangGraph workflow to be able to call tools. Add the tool `run_command` to the agent workflow.
+[x] Add a tool `run_command` to execute a command and get the result. Modify the LangGraph workflow to be able to call tools. Add the tool `run_command` to the agent workflow.
 [ ] More tasks to be added...
+
+## Coding Conventions
+
+### Comments
+
+- Do not mention the project name in comments.
