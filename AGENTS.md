@@ -28,6 +28,8 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] When running as a Github Action, if there is any documents changed, create a Git commit and push it back to the pull request.
 [x] Add a new agent that reads the description of the Github pull request. The description is in Markdown format and contains configurations of DocuCat. The agent should read the description and respond with a JSON object like `{ "enabled": true/false, "shouldCreateCommits": true/false }`. Name the file of the agent as configuration_expert.py.
 [x] When running as a Github action, the agent should create a comment summarizing the document changes to the pull request. If there is no document change, the agent should still create a comment explaining there is no document change to commit.
+[ ] When running as a Github action, the agent should be aware of all comments of a pull request. The tasks of the agent should be subject to the instructions of the comments of the developers.
+[ ] DocuCat should be triggered by a new comment mentioning @DocuCat.
 [ ] Add a command to initialize the local vector store and create embeddings for all codes and documents.
 [ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...
