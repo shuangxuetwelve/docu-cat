@@ -5,7 +5,7 @@ name: DocuCat - Document Generator
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
 
 jobs:
   docu-cat:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for git diff
+          fetch-depth: 0 # Fetch full history for git diff
 
       - name: Run DocuCat
         uses: ./ # Use this when testing in the DocuCat repository itself
