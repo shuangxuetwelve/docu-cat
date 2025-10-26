@@ -26,7 +26,9 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] Add a tool `run_command` to execute a command and get the result. Modify the LangGraph workflow to be able to call tools. Add the tool `run_command` to the agent workflow.
 [x] Identify the documents to change and make the changes. If there is no document to change, quit.
 [x] When running as a Github Action, if there is any documents changed, create a Git commit and push it back to the pull request.
+[x] Add a new agent that reads the description of the Github pull request. The description is in Markdown format and contains configurations of DocuCat. The agent should read the description and respond with a JSON object like `{ "enabled": true/false, "shouldCreateCommits": true/false }`. Name the file of the agent as configuration_expert.py.
 [ ] Add a command to initialize the local vector store and create embeddings for all codes and documents.
+[ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...
 
 ## Coding Conventions

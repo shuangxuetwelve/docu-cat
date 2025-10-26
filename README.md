@@ -51,6 +51,36 @@ jobs:
 
 4. Open a pull request and DocuCat will automatically run!
 
+### Configuring DocuCat via PR Description
+
+You can configure DocuCat on a per-pull-request basis by adding a configuration section to your PR description:
+
+**Add this section to your PR description:**
+```markdown
+## Configurations of DocuCat
+
+- [x] Enable DocuCat
+- [x] Should DocuCat create commits?
+```
+
+**Disable DocuCat on a specific PR:**
+```markdown
+## Configurations of DocuCat
+
+- [ ] Enable DocuCat
+- [x] Should DocuCat create commits?
+```
+
+**Analyze only (don't create commits):**
+```markdown
+## Configurations of DocuCat
+
+- [x] Enable DocuCat
+- [ ] Should DocuCat create commits?
+```
+
+See [CONFIGURATION.md](CONFIGURATION.md) for all configuration options and examples.
+
 ### Running DocuCat Locally
 
 You can run DocuCat locally to analyze recent commits in any repository:
@@ -114,9 +144,10 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - ✅ Detects and prints changed files in pull requests
 - ✅ AI-powered change analysis using Claude Haiku 4.5 via OpenRouter and LangChain
 - ✅ Understands the intent and purpose of code changes
+- ✅ Automatically updates documentation and creates commits
+- ✅ Per-PR configuration via PR description
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
-- 🚧 Document generation (coming soon)
 
 ## Development
 
@@ -147,18 +178,23 @@ You can run DocuCat locally to analyze recent commits in any repository:
 
 ```
 docu-cat/
-├── action.yml              # GitHub Action definition
-├── pyproject.toml         # Python project configuration
-├── AGENTS.md              # Project guidelines and task list
-├── __init__.py            # Package initialization
-├── main.py                # CLI entry point for local execution
-├── detect_changes.py      # GitHub Action script for PR changes
-├── analyzer.py            # LangGraph workflow for AI analysis
-├── tools/                 # LangChain tools for the AI agent
-│   └── run_command.py     # Command execution tool
+├── action.yml                   # GitHub Action definition
+├── pyproject.toml              # Python project configuration
+├── AGENTS.md                   # Project guidelines and task list
+├── CONFIGURATION.md            # Configuration documentation
+├── __init__.py                 # Package initialization
+├── main.py                     # CLI entry point for local execution
+├── detect_changes.py           # GitHub Action script for PR changes
+├── analyzer.py                 # LangGraph workflow for AI analysis
+├── configuration_expert.py     # AI agent for parsing PR configurations
+├── test_configuration_expert.py # Tests for configuration parser
+├── tools/                      # LangChain tools for the AI agent
+│   ├── run_command.py          # Command execution tool
+│   ├── read_file.py            # File reading tool
+│   └── write_file.py           # File writing tool
 └── .github/
     └── workflows/
-        └── example.yml    # Example workflow configuration
+        └── example.yml         # Example workflow configuration
 ```
 
 ### Implementation Details
@@ -176,12 +212,13 @@ docu-cat/
 When a pull request is created or updated:
 
 1. DocuCat checks out the repository
-2. Detects changed files between base and head commits
-3. Analyzes changes using Claude Haiku 4.5 via OpenRouter and LangGraph to understand the intent
-4. Determines the type of change (feature, bugfix, refactor, etc.) and affected areas
-5. (Coming soon) Reads `AGENTS.md` to understand code/document structure
-6. (Coming soon) Generates or updates relevant documentation
-7. Prints the analysis results
+2. Reads configuration from the PR description (if any)
+3. Checks if DocuCat is enabled for this PR
+4. Detects changed files between base and head commits
+5. Analyzes changes using Claude Haiku 4.5 via OpenRouter and LangGraph to understand the intent
+6. Determines which documentation files need updates
+7. Updates the documentation files
+8. Creates a commit and pushes changes back to the PR (if configured to do so)
 
 ## Contributing
 

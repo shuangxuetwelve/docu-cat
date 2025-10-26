@@ -11,6 +11,7 @@ import urllib.request
 import urllib.error
 
 from analyzer import identify_and_update_documents
+from configuration_expert import get_docucat_configuration
 
 
 def get_changed_files_from_api(token, repository, pr_number):
@@ -233,6 +234,17 @@ def main():
     print(f"📍 Head SHA: {head_sha[:8]}...")
     print()
 
+    # Read DocuCat configuration from PR description
+    config = get_docucat_configuration()
+
+    # Check if DocuCat is enabled
+    if not config['enabled']:
+        print("⏭️  DocuCat is disabled via PR description configuration.")
+        print("   Skipping analysis and documentation updates.")
+        print()
+        print("=" * 60)
+        sys.exit(0)
+
     # Try to get changed files using the API
     changed_files = []
 
@@ -285,8 +297,13 @@ def main():
                 print(f"  ✓ {doc}")
             print()
 
-            # Commit and push the changes back to the PR
-            commit_and_push_changes(result['documents_updated'], repo_path)
+            # Commit and push the changes back to the PR (if enabled)
+            if config['shouldCreateCommits']:
+                commit_and_push_changes(result['documents_updated'], repo_path)
+            else:
+                print("ℹ️  Commit creation is disabled via PR description configuration.")
+                print("   Documents were updated locally but not committed.")
+                print()
         else:
             print("ℹ️  No documents were updated.")
         print()
