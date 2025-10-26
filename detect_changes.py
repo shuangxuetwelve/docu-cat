@@ -131,7 +131,13 @@ def main():
         print("=" * 60)
         print()
 
-        analysis = analyze_changed_files(changed_files, os.getcwd())
+        # Use GITHUB_WORKSPACE for the repository path in GitHub Actions
+        # This points to the actual repository being analyzed, not the action's directory
+        repo_path = os.getenv('GITHUB_WORKSPACE', os.getcwd())
+        print(f"📂 Repository path: {repo_path}")
+        print()
+
+        analysis = analyze_changed_files(changed_files, repo_path)
         print(analysis)
         print()
 
