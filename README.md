@@ -154,6 +154,8 @@ docu-cat/
 ├── main.py                # CLI entry point for local execution
 ├── detect_changes.py      # GitHub Action script for PR changes
 ├── analyzer.py            # LangGraph workflow for AI analysis
+├── tools/                 # LangChain tools for the AI agent
+│   └── run_command.py     # Command execution tool
 └── .github/
     └── workflows/
         └── example.yml    # Example workflow configuration
