@@ -19,6 +19,10 @@ When DocuCat analyzes changes and updates documentation files, it posts a commen
 > - `src/login.py`
 > - `tests/test_auth.py`
 >
+> ### 🔍 Analysis
+>
+> This PR introduces OAuth2 authentication to the application. The changes add new authentication endpoints in `src/auth.py` and update the login flow in `src/login.py`. The new authentication system supports Google and GitHub as OAuth providers. Documentation has been updated to reflect the new authentication requirements and API endpoints.
+>
 > ### 📝 Documentation Updated (2)
 >
 > The following documentation files were updated:
@@ -46,6 +50,10 @@ When code changes don't require documentation updates:
 > **Changed Files (1):**
 > - `src/utils.py`
 >
+> ### 🔍 Analysis
+>
+> This PR contains internal refactoring of the utility functions in `src/utils.py`. The changes improve code organization and readability but do not modify any public APIs or user-facing functionality. No documentation updates are required.
+>
 > ### ✅ No Documentation Updates Needed
 >
 > After analyzing the code changes, DocuCat determined that no documentation updates are required.
@@ -68,6 +76,10 @@ When DocuCat is configured to analyze but not create commits:
 > **Changed Files (2):**
 > - `src/api/endpoints.py`
 > - `src/api/models.py`
+>
+> ### 🔍 Analysis
+>
+> This PR modifies the API endpoints structure in `src/api/endpoints.py` and updates data models in `src/api/models.py`. Two new REST endpoints have been added for user profile management. The API documentation and changelog have been updated to reflect these new endpoints and their request/response formats.
 >
 > ### 📝 Documentation Updated (2)
 >
@@ -106,6 +118,10 @@ When a PR has many changed files, DocuCat shows the first 10 and summarizes the 
 > - `src/module10.py`
 > - ... and 5 more
 >
+> ### 🔍 Analysis
+>
+> This PR is a large-scale refactoring that reorganizes the module structure across the codebase. Multiple modules have been split into smaller, more focused components to improve maintainability. While the internal structure has changed significantly, the public API remains stable. The README has been updated to reflect the new project structure.
+>
 > ### 📝 Documentation Updated (1)
 >
 > The following documentation files were updated:
@@ -121,6 +137,7 @@ When a PR has many changed files, DocuCat shows the first 10 and summarizes the 
 
 ## Benefits of PR Comments
 
+- **AI Analysis**: See DocuCat's understanding of the code changes and their impact
 - **Transparency**: Team members can see what DocuCat analyzed and changed
 - **Audit Trail**: Comments provide a record of automated documentation updates
 - **Configuration Visibility**: Shows the DocuCat settings used for this PR

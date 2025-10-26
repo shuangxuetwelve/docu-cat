@@ -32,6 +32,11 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> s
         comment += f"- ... and {len(changed_files) - 10} more\n"
     comment += "\n"
 
+    # Add analysis section
+    if result.get('analysis'):
+        comment += "### 🔍 Analysis\n\n"
+        comment += result['analysis'] + "\n\n"
+
     # Add documentation update summary
     if result.get('no_updates_needed'):
         comment += "### ✅ No Documentation Updates Needed\n\n"
@@ -71,7 +76,7 @@ def test_comment_scenarios():
     print("Scenario 1: Documents Updated (with commits)")
     print("-" * 70)
     result1 = {
-        'analysis': 'Code changes detected in authentication module.',
+        'analysis': 'This PR introduces OAuth2 authentication to the application. The changes add new authentication endpoints in `src/auth.py` and update the login flow in `src/login.py`. The new authentication system supports Google and GitHub as OAuth providers. Documentation has been updated to reflect the new authentication requirements and API endpoints.',
         'documents_updated': ['README.md', 'docs/api.md'],
         'no_updates_needed': False
     }
@@ -87,7 +92,7 @@ def test_comment_scenarios():
     print("Scenario 2: No Documentation Updates Needed")
     print("-" * 70)
     result2 = {
-        'analysis': 'Minor code refactoring with no API changes.',
+        'analysis': 'This PR contains internal refactoring of the utility functions in `src/utils.py`. The changes improve code organization and readability but do not modify any public APIs or user-facing functionality. No documentation updates are required.',
         'documents_updated': [],
         'no_updates_needed': True
     }
@@ -103,7 +108,7 @@ def test_comment_scenarios():
     print("Scenario 3: Documents Updated (no commits - analyze only)")
     print("-" * 70)
     result3 = {
-        'analysis': 'API changes detected.',
+        'analysis': 'This PR modifies the API endpoints structure in `src/api/endpoints.py` and updates data models in `src/api/models.py`. Two new REST endpoints have been added for user profile management. The API documentation and changelog have been updated to reflect these new endpoints and their request/response formats.',
         'documents_updated': ['docs/api.md', 'CHANGELOG.md'],
         'no_updates_needed': False
     }
@@ -119,7 +124,7 @@ def test_comment_scenarios():
     print("Scenario 4: Many Changed Files (showing truncation)")
     print("-" * 70)
     result4 = {
-        'analysis': 'Large refactoring across multiple modules.',
+        'analysis': 'This PR is a large-scale refactoring that reorganizes the module structure across the codebase. Multiple modules have been split into smaller, more focused components to improve maintainability. While the internal structure has changed significantly, the public API remains stable. The README has been updated to reflect the new project structure.',
         'documents_updated': ['README.md'],
         'no_updates_needed': False
     }

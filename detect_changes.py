@@ -275,6 +275,11 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> s
         comment += f"- ... and {len(changed_files) - 10} more\n"
     comment += "\n"
 
+    # Add analysis section
+    if result.get('analysis'):
+        comment += "### 🔍 Analysis\n\n"
+        comment += result['analysis'] + "\n\n"
+
     # Add documentation update summary
     if result.get('no_updates_needed'):
         comment += "### ✅ No Documentation Updates Needed\n\n"
