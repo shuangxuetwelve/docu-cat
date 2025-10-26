@@ -10,6 +10,12 @@ import sys
 import argparse
 import subprocess
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+from analyzer import analyze_changed_files
 
 
 def get_recent_commits_files(repo_path: Path, commit_count: int) -> list[str]:
@@ -140,12 +146,23 @@ Examples:
     else:
         print("\n📝 No changed files detected.\n")
 
+    # Analyze changes with Claude Haiku 3.5 via OpenRouter
+    if changed_files:
+        print("=" * 60)
+        print("🤖 Analyzing Changes with Claude Haiku 3.5 (via OpenRouter)")
+        print("=" * 60)
+        print()
+
+        analysis = analyze_changed_files(changed_files)
+        print(analysis)
+        print()
+
     print("=" * 60)
     print()
     print("⚠️  DOCUCAT IS UNDER CONSTRUCTION")
     print()
     print("Document generation is not yet implemented.")
-    print("Currently only detecting changed files.")
+    print("Currently analyzing change intent with AI.")
     print()
     print("See AGENTS.md for the development roadmap.")
     print("=" * 60)

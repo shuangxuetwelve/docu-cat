@@ -11,6 +11,9 @@ inputs:
     description: 'GitHub token for API access'
     required: false
     default: ${{ github.token }}
+  openrouter-api-key:
+    description: 'OpenRouter API key for LLM analysis'
+    required: true
 
 runs:
   using: 'composite'
@@ -23,10 +26,14 @@ runs:
       with:
         python-version: '3.12'
 
-    - name: Get changed files
-      id: changed-files
+    - name: Install dependencies
       shell: bash
-      run: uv run --no-project ${{ github.action_path }}/src/detect_changes.py
+      run: cd ${{ github.action_path }} && uv sync
+
+    - name: Analyze changes with DocuCat
+      id: analyze-changes
+      shell: bash
+      run: uv run --directory ${{ github.action_path }} python detect_changes.py
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         GITHUB_EVENT_NAME: ${{ github.event_name }}
@@ -35,3 +42,4 @@ runs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         BASE_SHA: ${{ github.event.pull_request.base.sha }}
         HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}

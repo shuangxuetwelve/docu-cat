@@ -7,10 +7,14 @@ requires-python = ">=3.12"
 authors = [
     { name = "lu" }
 ]
-dependencies = []
+dependencies = [
+    "langgraph>=0.2.0",
+    "langchain-openai>=0.2.0",
+    "python-dotenv>=1.0.0",
+]
 
 [project.scripts]
-docu-cat = "src.main:main"
+docu-cat = "main:main"
 
 [project.optional-dependencies]
 dev = []
@@ -18,6 +22,9 @@ dev = []
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["main.py", "detect_changes.py", "analyzer.py", "__init__.py"]
 
 [tool.uv]
 dev-dependencies = []

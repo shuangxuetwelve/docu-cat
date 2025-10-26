@@ -9,6 +9,8 @@ import json
 import urllib.request
 import urllib.error
 
+from analyzer import analyze_changed_files
+
 
 def get_changed_files_from_api(token, repository, pr_number):
     """
@@ -121,6 +123,17 @@ def main():
         print()
     else:
         print("\n📝 No changed files detected.\n")
+
+    # Analyze changes with Claude Haiku 3.5 via OpenRouter
+    if changed_files:
+        print("=" * 60)
+        print("🤖 Analyzing Changes with Claude Haiku 3.5 (via OpenRouter)")
+        print("=" * 60)
+        print()
+
+        analysis = analyze_changed_files(changed_files)
+        print(analysis)
+        print()
 
     print("=" * 60)
 

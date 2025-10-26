@@ -24,3 +24,4 @@ jobs:
         # uses: lu/docu-cat@main  # or use a specific version tag
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}

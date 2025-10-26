@@ -19,5 +19,5 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] Make DocuCat be able to run as a Github Action in another repository. It simply prints the changed files in a pull request.
 [x] Use `uv` to manage Python dependencies both locally and in Github Action.
 [x] Add an entry file to run DocuCat locally.
-[ ] Add LangGraph and use Claude Haiku 4.5 to understand the intents of the changes.
+[x] Add LangGraph and use Claude Haiku 4.5 to understand the intents of the changes.
 [ ] More tasks to be added...
