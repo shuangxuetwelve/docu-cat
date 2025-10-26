@@ -28,14 +28,17 @@ Execute a shell command and return the result. The AI agent can use this tool to
 When analyzing changed files, the AI agent can automatically decide to use this tool:
 
 ```
+Repository path: /Users/user/my-project
 Changed files: main.py, analyzer.py
 
 AI Agent thinks: "I should inspect what changed in these files"
-AI Agent calls: run_command("git diff HEAD~1 main.py")
+AI Agent calls: run_command("git diff HEAD~1 main.py", working_dir="/Users/user/my-project")
 Tool prints: 🔧 Running command: git diff HEAD~1 main.py
 Tool returns: [actual diff output]
 AI Agent: "Based on the diff, this adds a new feature..."
 ```
+
+The agent receives the repository path in the initial prompt and is instructed to use it with the `working_dir` parameter when calling `run_command`.
 
 ## Workflow Architecture
 
@@ -48,15 +51,20 @@ START → agent → [decision] → tools → agent → [decision] → END
 ```
 
 **Nodes:**
-1. **agent**: Calls LLM with tools bound, receives changed files list
+1. **agent**: Calls LLM with tools bound, receives changed files list and repository path
 2. **tools**: Executes tool calls made by the agent
 3. **conditional edge**: Decides whether to continue with tools or end
 
+**State:**
+- `changed_files`: List of file paths that were modified
+- `repo_path`: Absolute path to the repository being analyzed
+- `messages`: Conversation history including tool calls and responses
+
 **Flow:**
-1. Agent receives list of changed files
-2. Agent analyzes and optionally calls `run_command` to inspect files
+1. Agent receives list of changed files and repository path
+2. Agent analyzes and optionally calls `run_command` to inspect files in the repository
 3. If tool calls are made, execute them and return to agent
-4. Agent provides final analysis
+4. Agent provides final analysis based on gathered information
 5. Workflow ends
 
 ## Adding New Tools

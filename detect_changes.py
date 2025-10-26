@@ -131,7 +131,7 @@ def main():
         print("=" * 60)
         print()
 
-        analysis = analyze_changed_files(changed_files)
+        analysis = analyze_changed_files(changed_files, os.getcwd())
         print(analysis)
         print()
 

@@ -153,7 +153,7 @@ Examples:
         print("=" * 60)
         print()
 
-        analysis = analyze_changed_files(changed_files)
+        analysis = analyze_changed_files(changed_files, str(repo_path))
         print(analysis)
         print()
 

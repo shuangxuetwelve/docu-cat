@@ -17,6 +17,7 @@ from langgraph.prebuilt import ToolNode
 class AnalysisState(TypedDict):
     """State for the analysis workflow."""
     changed_files: list[str]
+    repo_path: str
     messages: Annotated[list, add_messages]
 
 
@@ -154,12 +155,13 @@ def create_analysis_workflow() -> StateGraph:
     return workflow.compile()
 
 
-def analyze_changed_files(changed_files: list[str]) -> str:
+def analyze_changed_files(changed_files: list[str], repo_path: str = ".") -> str:
     """
     Convenience function to analyze a list of changed files.
 
     Args:
         changed_files: List of file paths that changed
+        repo_path: Path to the repository being analyzed (default: current directory)
 
     Returns:
         Analysis result string
@@ -179,11 +181,13 @@ def analyze_changed_files(changed_files: list[str]) -> str:
         files_list = "\n".join(f"  - {f}" for f in changed_files)
         initial_prompt = f"""Analyze the following changed files from a code commit and determine the intent of the changes:
 
+Repository path: {repo_path}
 Changed files:
 {files_list}
 
 You have access to the run_command tool to inspect file contents or check git diffs.
 Use this tool to gather more information about the changes if needed.
+When using run_command, specify working_dir="{repo_path}" to run commands in the repository.
 
 Based on your analysis, determine:
 1. What feature or functionality is being added/modified?
@@ -194,6 +198,7 @@ Provide a concise analysis (2-4 sentences) focusing on the intent and purpose of
 
         initial_state = {
             "changed_files": changed_files,
+            "repo_path": repo_path,
             "messages": [HumanMessage(content=initial_prompt)],
         }
 
