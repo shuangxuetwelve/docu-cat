@@ -72,35 +72,42 @@ def get_changed_files_from_git(base_sha, head_sha):
         sys.exit(1)
 
 
-def configure_git():
+def configure_git(working_dir: str = None):
     """
     Configure git user for commits.
     Uses GitHub Actions bot identity.
+
+    Args:
+        working_dir: Directory to run git commands in (defaults to current directory)
     """
     try:
         subprocess.run(
             ['git', 'config', 'user.name', 'github-actions[bot]'],
+            cwd=working_dir,
             check=True,
             capture_output=True
         )
         subprocess.run(
             ['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
+            cwd=working_dir,
             check=True,
             capture_output=True
         )
         print("✓ Git user configured")
     except subprocess.CalledProcessError as e:
         print(f"Error configuring git: {e}", file=sys.stderr)
-        print(f"stderr: {e.stderr.decode()}", file=sys.stderr)
+        if e.stderr:
+            print(f"stderr: {e.stderr.decode()}", file=sys.stderr)
         raise
 
 
-def commit_and_push_changes(documents_updated: list[str]):
+def commit_and_push_changes(documents_updated: list[str], working_dir: str = None):
     """
     Create a commit with updated documents and push to the PR branch.
 
     Args:
         documents_updated: List of document file paths that were updated
+        working_dir: Directory to run git commands in (defaults to current directory)
     """
     if not documents_updated:
         print("No documents to commit.")
@@ -114,13 +121,14 @@ def commit_and_push_changes(documents_updated: list[str]):
 
     try:
         # Configure git
-        configure_git()
+        configure_git(working_dir)
 
         # Stage the updated files
         print(f"📦 Staging {len(documents_updated)} updated document(s)...")
         for doc in documents_updated:
             result = subprocess.run(
                 ['git', 'add', doc],
+                cwd=working_dir,
                 capture_output=True,
                 text=True
             )
@@ -132,6 +140,7 @@ def commit_and_push_changes(documents_updated: list[str]):
         # Check if there are changes to commit
         status_result = subprocess.run(
             ['git', 'status', '--porcelain'],
+            cwd=working_dir,
             capture_output=True,
             text=True,
             check=True
@@ -157,6 +166,7 @@ Documents updated:
         print("💾 Creating commit...")
         subprocess.run(
             ['git', 'commit', '-m', commit_message],
+            cwd=working_dir,
             check=True,
             capture_output=True
         )
@@ -167,6 +177,7 @@ Documents updated:
         print("🚀 Pushing to PR branch...")
         subprocess.run(
             ['git', 'push'],
+            cwd=working_dir,
             check=True,
             capture_output=True,
             text=True
@@ -275,7 +286,7 @@ def main():
             print()
 
             # Commit and push the changes back to the PR
-            commit_and_push_changes(result['documents_updated'])
+            commit_and_push_changes(result['documents_updated'], repo_path)
         else:
             print("ℹ️  No documents were updated.")
         print()
