@@ -124,10 +124,10 @@ def main():
     else:
         print("\n📝 No changed files detected.\n")
 
-    # Analyze changes with Claude Haiku 3.5 via OpenRouter
+    # Analyze changes with Claude Haiku 4.5 via OpenRouter
     if changed_files:
         print("=" * 60)
-        print("🤖 Analyzing Changes with Claude Haiku 3.5 (via OpenRouter)")
+        print("🤖 Analyzing Changes with Claude Haiku 4.5 (via OpenRouter)")
         print("=" * 60)
         print()
 

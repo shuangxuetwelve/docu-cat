@@ -104,7 +104,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - `-p, --path`: Path to repository (default: current directory)
 - `-c, --count`: Number of recent commits to analyze (default: 1)
 
-**Note:** DocuCat requires an OpenRouter API key to analyze changes with Claude Haiku 3.5.
+**Note:** DocuCat requires an OpenRouter API key to analyze changes with Claude Haiku 4.5.
 - Get your API key from https://openrouter.ai/keys
 - Store it in a `.env` file (recommended) or set as an environment variable
 - OpenRouter provides access to Claude and many other LLMs through a unified API
@@ -112,7 +112,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 ## Current Features
 
 - ✅ Detects and prints changed files in pull requests
-- ✅ AI-powered change analysis using Claude Haiku 3.5 via OpenRouter and LangChain
+- ✅ AI-powered change analysis using Claude Haiku 4.5 via OpenRouter and LangChain
 - ✅ Understands the intent and purpose of code changes
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
@@ -164,7 +164,7 @@ docu-cat/
 - Built with Python 3.12+
 - Managed with uv for fast, reliable dependency management
 - Uses LangGraph for AI workflow orchestration
-- Powered by Claude 3.5 Haiku via OpenRouter for intelligent change analysis
+- Powered by Claude Haiku 4.5 via OpenRouter for intelligent change analysis
 - LangChain integration for LLM abstraction
 - Integrates with GitHub API for PR analysis
 - OpenRouter provides unified access to multiple LLM providers
@@ -175,7 +175,7 @@ When a pull request is created or updated:
 
 1. DocuCat checks out the repository
 2. Detects changed files between base and head commits
-3. Analyzes changes using Claude Haiku 3.5 via OpenRouter and LangGraph to understand the intent
+3. Analyzes changes using Claude Haiku 4.5 via OpenRouter and LangGraph to understand the intent
 4. Determines the type of change (feature, bugfix, refactor, etc.) and affected areas
 5. (Coming soon) Reads `AGENTS.md` to understand code/document structure
 6. (Coming soon) Generates or updates relevant documentation
