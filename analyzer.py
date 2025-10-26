@@ -35,6 +35,9 @@ def run_command(command: str, working_dir: str = ".") -> str:
     Returns:
         Command output as a string, or error message if command fails
     """
+    # Print the command being executed
+    print(f"🔧 Running command: {command}")
+
     try:
         result = subprocess.run(
             command,

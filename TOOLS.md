@@ -18,6 +18,7 @@ Execute a shell command and return the result. The AI agent can use this tool to
 - Error message if command fails or times out
 
 **Safety Features:**
+- Prints every command before execution for transparency
 - 30-second timeout to prevent hanging commands
 - Error handling for failed commands
 - Captures both stdout and stderr
@@ -31,6 +32,7 @@ Changed files: main.py, analyzer.py
 
 AI Agent thinks: "I should inspect what changed in these files"
 AI Agent calls: run_command("git diff HEAD~1 main.py")
+Tool prints: 🔧 Running command: git diff HEAD~1 main.py
 Tool returns: [actual diff output]
 AI Agent: "Based on the diff, this adds a new feature..."
 ```
