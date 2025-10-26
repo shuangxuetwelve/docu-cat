@@ -49,7 +49,13 @@ jobs:
 
 3. Create an `AGENTS.md` file in your repository root to help DocuCat understand your codebase structure (optional but recommended).
 
-4. Open a pull request and DocuCat will automatically run!
+4. Open a pull request and DocuCat will automatically:
+   - Analyze code changes
+   - Update documentation if needed
+   - Create a commit with the changes (if configured)
+   - Post a summary comment to the PR
+
+   See [PR_COMMENT_EXAMPLE.md](docs/PR_COMMENT_EXAMPLE.md) for examples of PR comments.
 
 ### Configuring DocuCat via PR Description
 
@@ -145,6 +151,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - ✅ AI-powered change analysis using Claude Haiku 4.5 via OpenRouter and LangChain
 - ✅ Understands the intent and purpose of code changes
 - ✅ Automatically updates documentation and creates commits
+- ✅ Posts summary comments to pull requests
 - ✅ Per-PR configuration via PR description
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
@@ -182,12 +189,15 @@ docu-cat/
 ├── pyproject.toml              # Python project configuration
 ├── AGENTS.md                   # Project guidelines and task list
 ├── CONFIGURATION.md            # Configuration documentation
+├── PR_DESCRIPTION_EXAMPLE.md   # Example PR description with config
+├── PR_COMMENT_EXAMPLE.md       # Example PR comments from DocuCat
 ├── __init__.py                 # Package initialization
 ├── main.py                     # CLI entry point for local execution
 ├── detect_changes.py           # GitHub Action script for PR changes
 ├── analyzer.py                 # LangGraph workflow for AI analysis
 ├── configuration_expert.py     # AI agent for parsing PR configurations
 ├── test_configuration_expert.py # Tests for configuration parser
+├── test_pr_comment.py          # Tests for PR comment formatting
 ├── tools/                      # LangChain tools for the AI agent
 │   ├── run_command.py          # Command execution tool
 │   ├── read_file.py            # File reading tool
@@ -219,6 +229,7 @@ When a pull request is created or updated:
 6. Determines which documentation files need updates
 7. Updates the documentation files
 8. Creates a commit and pushes changes back to the PR (if configured to do so)
+9. Posts a summary comment to the PR with the analysis results
 
 ## Contributing
 
