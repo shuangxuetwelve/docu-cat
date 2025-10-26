@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from analyzer import analyze_changed_files
+from analyzer import identify_and_update_documents
 
 
 def get_recent_commits_files(repo_path: Path, commit_count: int) -> list[str]:
@@ -146,25 +146,32 @@ Examples:
     else:
         print("\n📝 No changed files detected.\n")
 
-    # Analyze changes with Claude Haiku 4.5 via OpenRouter
+    # Analyze changes and update documents with Claude Haiku 4.5 via OpenRouter
     if changed_files:
         print("=" * 60)
-        print("🤖 Analyzing Changes with Claude Haiku 4.5 (via OpenRouter)")
+        print("🤖 Analyzing Changes and Updating Documents")
+        print("   (Claude Haiku 4.5 via OpenRouter)")
         print("=" * 60)
         print()
 
-        analysis = analyze_changed_files(changed_files, str(repo_path))
-        print(analysis)
+        result = identify_and_update_documents(changed_files, str(repo_path))
+
+        print("📊 Analysis:")
+        print("-" * 60)
+        print(result['analysis'])
         print()
 
-    print("=" * 60)
-    print()
-    print("⚠️  DOCUCAT IS UNDER CONSTRUCTION")
-    print()
-    print("Document generation is not yet implemented.")
-    print("Currently analyzing change intent with AI.")
-    print()
-    print("See AGENTS.md for the development roadmap.")
+        if result['no_updates_needed']:
+            print("✅ No documents needed updates.")
+        elif result['documents_updated']:
+            print("📝 Documents Updated:")
+            print("-" * 60)
+            for doc in result['documents_updated']:
+                print(f"  ✓ {doc}")
+        else:
+            print("ℹ️  No documents were updated.")
+        print()
+
     print("=" * 60)
 
 

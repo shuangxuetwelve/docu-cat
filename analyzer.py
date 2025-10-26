@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, System
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
-from tools import run_command
+from tools import run_command, read_file, write_file
 
 
 class AnalysisState(TypedDict):
@@ -76,12 +76,12 @@ def create_analysis_workflow() -> StateGraph:
         model="anthropic/claude-haiku-4.5",
         openai_api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
-        max_tokens=1500,
+        max_tokens=4000,
         temperature=0.7,
     )
 
     # Create tools list
-    tools = [run_command]
+    tools = [run_command, read_file, write_file]
 
     # Bind tools to LLM
     llm_with_tools = llm.bind_tools(tools)
@@ -113,46 +113,81 @@ def create_analysis_workflow() -> StateGraph:
     return workflow.compile()
 
 
-def analyze_changed_files(changed_files: list[str], repo_path: str = ".") -> str:
+def identify_and_update_documents(changed_files: list[str], repo_path: str = ".") -> dict:
     """
-    Convenience function to analyze a list of changed files.
+    Analyze changed files and identify/update documents that need changes.
 
     Args:
         changed_files: List of file paths that changed
         repo_path: Path to the repository being analyzed (default: current directory)
 
     Returns:
-        Analysis result string
+        Dictionary with:
+        - 'analysis': Analysis of code changes
+        - 'documents_updated': List of documents that were updated
+        - 'no_updates_needed': Boolean indicating if no documents needed updates
     """
     if not changed_files:
-        return "No changed files to analyze."
+        return {
+            "analysis": "No changed files to analyze.",
+            "documents_updated": [],
+            "no_updates_needed": True
+        }
 
     # Check for API key
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        return "Error: OPENROUTER_API_KEY not set. Cannot analyze changes."
+        return {
+            "analysis": "Error: OPENROUTER_API_KEY not set. Cannot analyze changes.",
+            "documents_updated": [],
+            "no_updates_needed": True
+        }
 
     try:
         workflow = create_analysis_workflow()
 
-        # Create initial prompt
+        # Create initial prompt for code analysis and document identification
         files_list = "\n".join(f"  - {f}" for f in changed_files)
-        initial_prompt = f"""Analyze the following changed files from a code commit and determine the intent of the changes:
+        initial_prompt = f"""Analyze the following changed files from a code commit and update relevant documentation:
 
 Repository path: {repo_path}
 Changed files:
 {files_list}
 
-You have access to the run_command tool to inspect file contents or check git diffs.
-Use this tool to gather more information about the changes if needed.
-When using run_command, specify working_dir="{repo_path}" to run commands in the repository.
+You have access to these tools:
+- run_command: Execute shell commands (git diff, cat, etc.)
+- read_file: Read file contents
+- write_file: Write/update file contents
 
-Based on your analysis, determine:
-1. What feature or functionality is being added/modified?
-2. What type of change is this (feature, bugfix, refactor, documentation, etc.)?
-3. What areas of the codebase are affected?
+Your task is to:
 
-Provide a concise analysis (2-4 sentences) focusing on the intent and purpose of the changes."""
+1. ANALYZE CODE CHANGES:
+   - Use run_command to inspect what changed in each file (e.g., git diff)
+   - Determine the intent and purpose of the changes
+   - Identify what features/functionality were added/modified
+
+2. IDENTIFY DOCUMENTS TO UPDATE:
+   - Determine which documentation files need updates based on the code changes
+   - Common documents to check:
+     * README.md - If project structure, features, or usage changed
+     * Other .md files as needed
+
+3. UPDATE DOCUMENTS:
+   For each document that needs updates:
+   a. Use read_file to read the current content
+   b. Determine what sections need to be updated
+   c. Use write_file to write the updated content
+   d. Be precise and only update what's necessary
+
+4. SUMMARIZE:
+   After completing updates, provide a summary listing:
+   - Which documents were updated
+   - What changes were made to each
+   - If no documents needed updates, clearly state "NO_UPDATES_NEEDED"
+
+Remember to specify working_dir="{repo_path}" when using any tools.
+
+Begin your analysis and document updates now."""
 
         initial_state = {
             "changed_files": changed_files,
@@ -163,13 +198,40 @@ Provide a concise analysis (2-4 sentences) focusing on the intent and purpose of
         # Run the workflow
         result = workflow.invoke(initial_state)
 
-        # Extract final analysis from the last AI message
+        # Extract information from messages
         messages = result.get("messages", [])
+        analysis = ""
+        documents_updated = []
+        no_updates_needed = False
+
+        # Find the final AI response
         for message in reversed(messages):
             if isinstance(message, AIMessage) and message.content:
-                return message.content
+                analysis = message.content
+                break
 
-        return "No analysis available"
+        # Check if agent indicated no updates needed
+        if "NO_UPDATES_NEEDED" in analysis:
+            no_updates_needed = True
+
+        # Find all write_file tool calls to determine which documents were updated
+        for message in messages:
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                for tool_call in message.tool_calls:
+                    if tool_call.get("name") == "write_file":
+                        filepath = tool_call.get("args", {}).get("filepath")
+                        if filepath and filepath not in documents_updated:
+                            documents_updated.append(filepath)
+
+        return {
+            "analysis": analysis if analysis else "No analysis available",
+            "documents_updated": documents_updated,
+            "no_updates_needed": no_updates_needed
+        }
 
     except Exception as e:
-        return f"Error during analysis: {str(e)}"
+        return {
+            "analysis": f"Error during analysis: {str(e)}",
+            "documents_updated": [],
+            "no_updates_needed": True
+        }
