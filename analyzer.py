@@ -113,13 +113,14 @@ def create_analysis_workflow() -> StateGraph:
     return workflow.compile()
 
 
-def identify_and_update_documents(changed_files: list[str], repo_path: str = ".") -> dict:
+def identify_and_update_documents(changed_files: list[str], repo_path: str = ".", developer_instructions: str = "") -> dict:
     """
     Analyze changed files and identify/update documents that need changes.
 
     Args:
         changed_files: List of file paths that changed
         repo_path: Path to the repository being analyzed (default: current directory)
+        developer_instructions: Optional instructions from PR comments (default: "")
 
     Returns:
         Dictionary with:
@@ -148,12 +149,20 @@ def identify_and_update_documents(changed_files: list[str], repo_path: str = "."
 
         # Create initial prompt for code analysis and document identification
         files_list = "\n".join(f"  - {f}" for f in changed_files)
+
+        # Add developer instructions if provided
+        instructions_section = ""
+        if developer_instructions:
+            instructions_section = f"""
+{developer_instructions}
+"""
+
         initial_prompt = f"""Analyze the following changed files from a code commit and update relevant documentation:
 
 Repository path: {repo_path}
 Changed files:
 {files_list}
-
+{instructions_section}
 You have access to these tools:
 - run_command: Execute shell commands (git diff, cat, etc.)
 - read_file: Read file contents

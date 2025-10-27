@@ -33,7 +33,7 @@ runs:
     - name: Analyze changes with DocuCat
       id: analyze-changes
       shell: bash
-      run: uv run --directory ${{ github.action_path }} python detect_changes.py
+      run: uv run --directory ${{ github.action_path }} python run_docu_cat_github.py
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         GITHUB_EVENT_NAME: ${{ github.event_name }}

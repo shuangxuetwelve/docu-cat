@@ -87,6 +87,27 @@ You can configure DocuCat on a per-pull-request basis by adding a configuration 
 
 See [CONFIGURATION.md](CONFIGURATION.md) for all configuration options and examples.
 
+### Guiding DocuCat with PR Comments
+
+DocuCat reads and follows developer instructions from PR comments. You can guide what gets documented:
+
+**Give specific instructions:**
+```markdown
+@DocuCat please update docs/api.md with the new authentication endpoints
+```
+
+**Request multiple updates:**
+```markdown
+DocuCat: update README.md and CHANGELOG.md with the breaking changes
+```
+
+**Provide context:**
+```markdown
+@DocuCat this adds OAuth2 support. Focus on security documentation.
+```
+
+See [docs/DEVELOPER_INSTRUCTIONS.md](docs/DEVELOPER_INSTRUCTIONS.md) for complete guide and examples.
+
 ### Running DocuCat Locally
 
 You can run DocuCat locally to analyze recent commits in any repository:
@@ -152,6 +173,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - ✅ Understands the intent and purpose of code changes
 - ✅ Automatically updates documentation and creates commits
 - ✅ Posts summary comments to pull requests
+- ✅ Follows developer instructions from PR comments
 - ✅ Per-PR configuration via PR description
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
@@ -178,33 +200,37 @@ You can run DocuCat locally to analyze recent commits in any repository:
 
 3. Run scripts using uv:
    ```bash
-   uv run python detect_changes.py
+   uv run python run_docu_cat_github.py
    ```
 
 ### Project Structure
 
 ```
 docu-cat/
-├── action.yml                   # GitHub Action definition
-├── pyproject.toml              # Python project configuration
-├── AGENTS.md                   # Project guidelines and task list
-├── CONFIGURATION.md            # Configuration documentation
-├── PR_DESCRIPTION_EXAMPLE.md   # Example PR description with config
-├── PR_COMMENT_EXAMPLE.md       # Example PR comments from DocuCat
-├── __init__.py                 # Package initialization
-├── main.py                     # CLI entry point for local execution
-├── detect_changes.py           # GitHub Action script for PR changes
-├── analyzer.py                 # LangGraph workflow for AI analysis
-├── configuration_expert.py     # AI agent for parsing PR configurations
-├── test_configuration_expert.py # Tests for configuration parser
-├── test_pr_comment.py          # Tests for PR comment formatting
-├── tools/                      # LangChain tools for the AI agent
-│   ├── run_command.py          # Command execution tool
-│   ├── read_file.py            # File reading tool
-│   └── write_file.py           # File writing tool
+├── action.yml                      # GitHub Action definition
+├── pyproject.toml                  # Python project configuration
+├── AGENTS.md                       # Project guidelines and task list
+├── CONFIGURATION.md                # Configuration documentation
+├── __init__.py                     # Package initialization
+├── main.py                         # CLI entry point for local execution
+├── run_docu_cat_github.py          # Script to run DocuCat
+├── analyzer.py                     # LangGraph workflow for AI analysis
+├── configuration_expert.py         # AI agent for parsing PR configurations
+├── comment_instructions_parser.py  # AI agent for parsing developer instructions
+├── test_configuration_expert.py    # Tests for configuration parser
+├── test_comment_instructions.py    # Tests for instruction parser
+├── test_pr_comment.py              # Tests for PR comment formatting
+├── docs/                           # Documentation
+│   ├── PR_DESCRIPTION_EXAMPLE.md   # Example PR description with config
+│   ├── PR_COMMENT_EXAMPLE.md       # Example PR comments from DocuCat
+│   └── DEVELOPER_INSTRUCTIONS.md   # Guide for developer instructions
+├── tools/                          # LangChain tools for the AI agent
+│   ├── run_command.py              # Command execution tool
+│   ├── read_file.py                # File reading tool
+│   └── write_file.py               # File writing tool
 └── .github/
     └── workflows/
-        └── example.yml         # Example workflow configuration
+        └── example.yml             # Example workflow configuration
 ```
 
 ### Implementation Details
@@ -225,11 +251,12 @@ When a pull request is created or updated:
 2. Reads configuration from the PR description (if any)
 3. Checks if DocuCat is enabled for this PR
 4. Detects changed files between base and head commits
-5. Analyzes changes using Claude Haiku 4.5 via OpenRouter and LangGraph to understand the intent
-6. Determines which documentation files need updates
-7. Updates the documentation files
-8. Creates a commit and pushes changes back to the PR (if configured to do so)
-9. Posts a summary comment to the PR with the analysis results
+5. Reads and parses developer instructions from PR comments
+6. Analyzes changes using Claude Haiku 4.5 via OpenRouter and LangGraph to understand the intent
+7. Follows developer instructions while determining which documentation files need updates
+8. Updates the documentation files
+9. Creates a commit and pushes changes back to the PR (if configured to do so)
+10. Posts a summary comment to the PR with the analysis results
 
 ## Contributing
 

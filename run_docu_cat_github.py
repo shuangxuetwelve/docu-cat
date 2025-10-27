@@ -12,6 +12,7 @@ import urllib.error
 
 from analyzer import identify_and_update_documents
 from configuration_expert import get_docucat_configuration
+from comment_instructions_parser import parse_comment_instructions, format_instructions_for_analysis
 
 
 def get_changed_files_from_api(token, repository, pr_number):
@@ -46,6 +47,46 @@ def get_changed_files_from_api(token, repository, pr_number):
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def get_pr_comments(token, repository, pr_number):
+    """
+    Get all comments from a GitHub pull request.
+
+    Args:
+        token: GitHub API token
+        repository: Repository in format 'owner/repo'
+        pr_number: Pull request number
+
+    Returns:
+        list: List of comment dictionaries with 'user', 'body', and 'created_at'
+    """
+    url = f"https://api.github.com/repos/{repository}/issues/{pr_number}/comments"
+
+    headers = {
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DocuCat-Action'
+    }
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            comments = []
+            for comment in data:
+                comments.append({
+                    'user': comment['user']['login'],
+                    'body': comment['body'],
+                    'created_at': comment['created_at']
+                })
+            return comments
+    except urllib.error.HTTPError as e:
+        print(f"⚠️  Error fetching PR comments: {e.code} {e.reason}", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"⚠️  Error fetching PR comments: {e}", file=sys.stderr)
+        return []
 
 
 def post_comment_to_pr(token, repository, pr_number, comment_body):
@@ -248,7 +289,7 @@ Documents updated:
         print("⚠️  The documentation was updated locally but could not be pushed.", file=sys.stderr)
 
 
-def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> str:
+def format_pr_comment(result: dict, config: dict, changed_files: list[str], has_developer_instructions: bool = False) -> str:
     """
     Format a PR comment summarizing DocuCat's analysis and actions.
 
@@ -256,6 +297,7 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> s
         result: Analysis result dictionary from identify_and_update_documents
         config: DocuCat configuration dictionary
         changed_files: List of changed files in the PR
+        has_developer_instructions: Whether developer instructions were provided
 
     Returns:
         Formatted comment in Markdown
@@ -265,7 +307,10 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> s
     # Add configuration info
     comment += "**Configuration:**\n"
     comment += f"- Enabled: {'✅ Yes' if config['enabled'] else '❌ No'}\n"
-    comment += f"- Create Commits: {'✅ Yes' if config['shouldCreateCommits'] else '❌ No'}\n\n"
+    comment += f"- Create Commits: {'✅ Yes' if config['shouldCreateCommits'] else '❌ No'}\n"
+    if has_developer_instructions:
+        comment += f"- Developer Instructions: ✅ Followed\n"
+    comment += "\n"
 
     # Add changed files summary
     comment += f"**Changed Files ({len(changed_files)}):**\n"
@@ -383,7 +428,37 @@ def main():
         print(f"📂 Repository path: {repo_path}")
         print()
 
-        result = identify_and_update_documents(changed_files, repo_path)
+        # Fetch and parse developer instructions from PR comments
+        developer_instructions = ""
+        has_developer_instructions = False
+        if token and repository and pr_number:
+            print("💬 Reading developer instructions from PR comments...")
+            comments = get_pr_comments(token, repository, pr_number)
+            if comments:
+                print(f"   Found {len(comments)} comment(s)")
+                instructions_data = parse_comment_instructions(comments)
+
+                # Check if DocuCat should run based on comments
+                if not instructions_data['should_run_docu_cat']:
+                    print(f"   ⏭️  DocuCat instructed to skip via PR comments")
+                    print()
+                    print("=" * 60)
+                    print("⏭️  Skipping DocuCat execution as requested in comments")
+                    print("=" * 60)
+                    sys.exit(0)
+
+                # Process instructions if present
+                if instructions_data['instructions']:
+                    print(f"   ✅ Developer instructions detected")
+                    developer_instructions = format_instructions_for_analysis(instructions_data)
+                    has_developer_instructions = True
+                else:
+                    print(f"   ℹ️  No specific instructions for DocuCat found")
+            else:
+                print(f"   ℹ️  No comments found on this PR")
+            print()
+
+        result = identify_and_update_documents(changed_files, repo_path, developer_instructions)
 
         print("📊 Analysis:")
         print("-" * 60)
@@ -417,7 +492,7 @@ def main():
             print("=" * 60)
             print()
 
-            comment = format_pr_comment(result, config, changed_files)
+            comment = format_pr_comment(result, config, changed_files, has_developer_instructions)
             post_comment_to_pr(token, repository, pr_number, comment)
             print()
 
