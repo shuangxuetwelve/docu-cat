@@ -14,6 +14,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pymilvus[milvus_lite]>=2.4.0",
     "sentence-transformers>=2.2.0",
+    "langchain-google-genai>=2.0.0",
 ]
 
 [project.scripts]

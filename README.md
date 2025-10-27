@@ -212,6 +212,14 @@ You can run DocuCat locally to analyze recent commits in any repository:
 
 DocuCat can create a local vector store using Milvus Lite to enable semantic search across your codebase. This allows DocuCat to find relevant code and documentation more intelligently.
 
+**Prerequisites:**
+- Set the `GEMINI_API_KEY` environment variable with your Google Gemini API key
+- Get your API key from https://ai.google.dev/gemini-api/docs/api-key
+
+```bash
+export GEMINI_API_KEY="your-gemini-api-key-here"
+```
+
 **Initialize a vector store:**
 
 ```bash
@@ -250,12 +258,13 @@ rag --info
 - Sets up a collection for code/document embeddings
 - Scans all files with supported extensions (Python, JavaScript, Markdown, etc.)
 - Splits files into chunks (200 characters with 30 character overlap)
-- Stores chunks in the database (embeddings are empty/zero vectors initially)
+- Generates embeddings using Google Gemini (text-embedding-004 model)
+- Stores chunks with their embeddings in the database
 
 **Supported file types:**
 Python, JavaScript, TypeScript, Java, C/C++, C#, Go, Rust, Ruby, PHP, Swift, Kotlin, Scala, R, Objective-C, Markdown, LaTeX, HTML, XML, JSON, YAML, Bash, PowerShell, SQL, and plain text.
 
-**Note:** The `.docucat` directory is automatically ignored by git. The vector store uses sentence-transformers for embeddings (384-dimension vectors). Chunks are stored with zero vectors initially - you can generate actual embeddings in a future step.
+**Note:** The `.docucat` directory is automatically ignored by git. The vector store uses Google Gemini embeddings with task type `RETRIEVAL_DOCUMENT` (1536-dimension vectors) for high-quality semantic search.
 
 ## Current Features
 
@@ -343,7 +352,7 @@ docu-cat/
 - Integrates with GitHub API for PR analysis
 - OpenRouter provides unified access to multiple LLM providers
 - Milvus Lite for local vector storage and semantic search
-- Sentence Transformers for code/document embeddings
+- Google Gemini (text-embedding-004) for high-quality code/document embeddings
 
 ## How It Works
 

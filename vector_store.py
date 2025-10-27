@@ -16,14 +16,14 @@ from pymilvus import (
     utility,
 )
 from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 
 # Default collection name for code and document embeddings
 DEFAULT_COLLECTION_NAME = "docu_cat_embeddings"
 
-# Embedding dimension for sentence-transformers/all-MiniLM-L6-v2
-# This is a lightweight model good for code and documentation
-EMBEDDING_DIM = 384
+# Embedding dimension for Gemini
+EMBEDDING_DIM = 1536
 
 
 def get_vector_store_path(repo_path: str) -> Path:
@@ -51,6 +51,27 @@ def get_milvus_db_path(repo_path: str) -> Path:
         Path: Path to the Milvus database file
     """
     return get_vector_store_path(repo_path) / "milvus.db"
+
+
+def create_embeddings_model():
+    """
+    Create and return a Gemini embeddings model.
+    
+    Returns:
+        GoogleGenerativeAIEmbeddings: Configured embeddings model
+    
+    Raises:
+        ValueError: If GEMINI_API_KEY is not set
+    """
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY environment variable is not set")
+    
+    return GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        task_type="RETRIEVAL_DOCUMENT",
+        google_api_key=api_key,
+    )
 
 
 def get_supported_extensions() -> Dict[str, str]:
@@ -398,11 +419,22 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
         files_processed = 0
         processing_errors = []
 
+        # Initialize embeddings model
+        try:
+            embeddings_model = create_embeddings_model()
+        except ValueError as e:
+            connections.disconnect("default")
+            return {
+                'success': False,
+                'error': str(e),
+                'error_type': 'processing_error'
+            }
+
         # Prepare data for batch insert
         file_paths = []
         contents = []
         file_types = []
-        embeddings = []
+        text_chunks = []  # Store text for embedding generation
 
         for relative_path, file_type, absolute_path in supported_files:
             chunks, error = split_file_into_chunks(absolute_path, file_type)
@@ -417,12 +449,34 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
                     file_paths.append(relative_path)
                     contents.append(chunk[:65535])  # Ensure within max length
                     file_types.append(file_type)
-                    # Empty embedding - use zero vector
-                    embeddings.append([0.0] * EMBEDDING_DIM)
+                    text_chunks.append(chunk)
                     total_chunks += 1
 
-        # Insert data into collection
+        # Generate embeddings and insert data into collection
         if total_chunks > 0:
+            # Generate embeddings for all chunks with specified dimensionality
+            try:
+                embeddings = embeddings_model.embed_documents(
+                    text_chunks,
+                    output_dimensionality=EMBEDDING_DIM
+                )
+                
+                # Ensure embeddings have the correct dimension
+                if embeddings and len(embeddings[0]) != EMBEDDING_DIM:
+                    connections.disconnect("default")
+                    return {
+                        'success': False,
+                        'error': f"Embedding dimension mismatch: expected {EMBEDDING_DIM}, got {len(embeddings[0])}",
+                        'error_type': 'processing_error'
+                    }
+            except Exception as e:
+                connections.disconnect("default")
+                return {
+                    'success': False,
+                    'error': f"Error generating embeddings: {str(e)}",
+                    'error_type': 'processing_error'
+                }
+
             data = [
                 file_paths,
                 contents,
