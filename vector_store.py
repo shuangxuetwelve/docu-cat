@@ -117,6 +117,99 @@ def save_store_metadata(repo_path: Path, commit_sha: str) -> bool:
         return False
 
 
+def load_store_metadata(repo_path: Path) -> Optional[Dict]:
+    """
+    Load metadata from store.json file in the .docucat directory.
+
+    Args:
+        repo_path: Path to the repository
+
+    Returns:
+        dict: Metadata dictionary with 'last_update_sha', or None if file doesn't exist or error occurs
+    """
+    try:
+        store_json_path = get_store_json_path(repo_path)
+
+        if not store_json_path.exists():
+            return None
+
+        with open(store_json_path, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        return metadata
+    except Exception:
+        return None
+
+
+def get_changed_files(repo_path: Path, old_sha: str, new_sha: str) -> tuple[List[str], Optional[str]]:
+    """
+    Get list of files that changed between two commits.
+
+    Args:
+        repo_path: Path to the git repository
+        old_sha: Old commit SHA
+        new_sha: New commit SHA
+
+    Returns:
+        tuple: (list of changed file paths relative to repo root, error message or None)
+    """
+    try:
+        # Use git diff to get list of changed files
+        result = subprocess.run(
+            ["git", "diff", "--name-only", old_sha, new_sha],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Filter out empty lines
+        changed_files = [line.strip() for line in result.stdout.split('\n') if line.strip()]
+
+        return changed_files, None
+    except subprocess.CalledProcessError as e:
+        return [], f"Error getting changed files: {e.stderr}"
+    except Exception as e:
+        return [], f"Error getting changed files: {str(e)}"
+
+
+def delete_chunks_by_file_path(collection: Collection, file_path: str) -> tuple[int, Optional[str]]:
+    """
+    Delete all chunks for a specific file from the collection.
+
+    Args:
+        collection: Milvus collection
+        file_path: Relative path to the file
+
+    Returns:
+        tuple: (number of chunks deleted, error message or None)
+    """
+    try:
+        # Query to find all entities with matching file_path
+        expr = f'file_path == "{file_path}"'
+
+        # Get the IDs of entities to delete
+        collection.load()
+        results = collection.query(
+            expr=expr,
+            output_fields=["id"]
+        )
+
+        if not results:
+            return 0, None
+
+        # Extract IDs
+        ids_to_delete = [result["id"] for result in results]
+
+        # Delete the entities
+        collection.delete(expr=f"id in {ids_to_delete}")
+        collection.flush()
+
+        return len(ids_to_delete), None
+    except Exception as e:
+        return 0, f"Error deleting chunks for {file_path}: {str(e)}"
+
+
 def create_embeddings_model():
     """
     Create and return a Gemini embeddings model.
@@ -574,6 +667,228 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
             'chunks_stored': total_chunks,
             'embedding_dim': EMBEDDING_DIM,
             'store_existed': store_existed,
+            'processing_errors': processing_errors if processing_errors else None
+        }
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'error_type': 'processing_error',
+            'traceback': error_trace
+        }
+
+
+def update_vector_store(repo_path: str) -> Dict:
+    """
+    Update the vector store by processing only changed files since last update.
+
+    Args:
+        repo_path: Path to the target repository
+
+    Returns:
+        dict: Result containing 'success' (bool), and additional data or error message
+              On success: {
+                  'success': True,
+                  'old_sha': str,
+                  'new_sha': str,
+                  'changed_files': int,
+                  'processed_files': int,
+                  'chunks_deleted': int,
+                  'chunks_added': int
+              }
+              On failure: {
+                  'success': False,
+                  'error': str,
+                  'error_type': str
+              }
+    """
+    try:
+        repo_path = Path(repo_path).resolve()
+
+        # Validate repository path
+        if not repo_path.exists():
+            return {
+                'success': False,
+                'error': f"Repository path does not exist: {repo_path}",
+                'error_type': 'validation'
+            }
+
+        if not repo_path.is_dir():
+            return {
+                'success': False,
+                'error': f"Path is not a directory: {repo_path}",
+                'error_type': 'validation'
+            }
+
+        # Check if vector store exists
+        milvus_db_path = get_milvus_db_path(repo_path)
+        if not milvus_db_path.exists():
+            return {
+                'success': False,
+                'error': f"Vector store does not exist. Use 'rag --init' to create it first.",
+                'error_type': 'validation'
+            }
+
+        # Load metadata to get last update SHA
+        metadata = load_store_metadata(repo_path)
+        if not metadata or 'last_update_sha' not in metadata:
+            return {
+                'success': False,
+                'error': f"No store.json found or missing last_update_sha. Use 'rag --force-init' to recreate the store.",
+                'error_type': 'validation'
+            }
+
+        old_sha = metadata['last_update_sha']
+
+        # Get current commit SHA
+        new_sha = get_current_git_sha(repo_path)
+        if not new_sha:
+            return {
+                'success': False,
+                'error': f"Could not get current git commit SHA. Is this a git repository?",
+                'error_type': 'validation'
+            }
+
+        # Check if there are any changes
+        if old_sha == new_sha:
+            return {
+                'success': True,
+                'old_sha': old_sha,
+                'new_sha': new_sha,
+                'changed_files': 0,
+                'processed_files': 0,
+                'chunks_deleted': 0,
+                'chunks_added': 0,
+                'message': 'No changes since last update'
+            }
+
+        # Get changed files
+        changed_files, error = get_changed_files(repo_path, old_sha, new_sha)
+        if error:
+            return {
+                'success': False,
+                'error': error,
+                'error_type': 'git_error'
+            }
+
+        if not changed_files:
+            # Update metadata even if no files changed
+            save_store_metadata(repo_path, new_sha)
+            return {
+                'success': True,
+                'old_sha': old_sha,
+                'new_sha': new_sha,
+                'changed_files': 0,
+                'processed_files': 0,
+                'chunks_deleted': 0,
+                'chunks_added': 0,
+                'message': 'No files changed'
+            }
+
+        # Connect to Milvus
+        connections.connect(
+            alias="default",
+            uri=str(milvus_db_path)
+        )
+
+        # Get collection
+        collection = Collection(DEFAULT_COLLECTION_NAME)
+
+        # Initialize embeddings model
+        try:
+            embeddings_model = create_embeddings_model()
+        except ValueError as e:
+            connections.disconnect("default")
+            return {
+                'success': False,
+                'error': str(e),
+                'error_type': 'processing_error'
+            }
+
+        # Get supported extensions
+        supported_extensions = get_supported_extensions()
+
+        # Process each changed file
+        total_chunks_deleted = 0
+        total_chunks_added = 0
+        processed_files = 0
+        processing_errors = []
+
+        for changed_file in changed_files:
+            # Get file extension
+            file_ext = Path(changed_file).suffix.lower()
+
+            # Skip files with unsupported extensions
+            if file_ext not in supported_extensions:
+                continue
+
+            file_type = supported_extensions[file_ext]
+            absolute_path = repo_path / changed_file
+
+            # Delete old chunks for this file
+            chunks_deleted, error = delete_chunks_by_file_path(collection, changed_file)
+            if error:
+                processing_errors.append((changed_file, error))
+                continue
+
+            total_chunks_deleted += chunks_deleted
+
+            # If file still exists, add new chunks
+            if absolute_path.exists():
+                chunks, error = split_file_into_chunks(str(absolute_path), file_type)
+
+                if error:
+                    processing_errors.append((changed_file, error))
+                    continue
+
+                if chunks:
+                    # Prepare data for this file
+                    file_paths = [changed_file] * len(chunks)
+                    contents = [chunk[:65535] for chunk in chunks]
+                    file_types = [file_type] * len(chunks)
+
+                    # Generate embeddings
+                    try:
+                        embeddings = embeddings_model.embed_documents(
+                            chunks,
+                            output_dimensionality=EMBEDDING_DIM
+                        )
+
+                        # Insert chunks
+                        data = [
+                            file_paths,
+                            contents,
+                            file_types,
+                            embeddings
+                        ]
+
+                        collection.insert(data)
+                        collection.flush()
+
+                        total_chunks_added += len(chunks)
+                    except Exception as e:
+                        processing_errors.append((changed_file, f"Error generating embeddings: {str(e)}"))
+                        continue
+
+            processed_files += 1
+
+        # Disconnect
+        connections.disconnect("default")
+
+        # Update metadata with new SHA
+        save_store_metadata(repo_path, new_sha)
+
+        return {
+            'success': True,
+            'old_sha': old_sha,
+            'new_sha': new_sha,
+            'changed_files': len(changed_files),
+            'processed_files': processed_files,
+            'chunks_deleted': total_chunks_deleted,
+            'chunks_added': total_chunks_added,
             'processing_errors': processing_errors if processing_errors else None
         }
 

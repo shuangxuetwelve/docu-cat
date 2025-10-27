@@ -2,6 +2,8 @@
 """
 DocuCat RAG (Retrieval-Augmented Generation) Tool
 Command-line tool to manage vector store for semantic search.
+
+This tool supports initializing, updating, and querying the vector store.
 """
 
 import sys
@@ -10,6 +12,7 @@ from pathlib import Path
 
 from vector_store import (
     initialize_vector_store,
+    update_vector_store,
     get_store_info,
     get_vector_store_path,
 )
@@ -31,6 +34,12 @@ Examples:
   # Force recreation of existing store
   rag --force-init /path/to/repo
 
+  # Update vector store with changes since last update
+  rag --update
+
+  # Update vector store for specific repository
+  rag --update /path/to/repo
+
   # Show vector store information
   rag --info
 
@@ -40,6 +49,7 @@ Examples:
 Using uv:
   uv run python rag.py --init
   uv run python rag.py --force-init /path/to/repo
+  uv run python rag.py --update
   uv run python rag.py --info
         """
     )
@@ -66,6 +76,12 @@ Using uv:
     )
 
     parser.add_argument(
+        '--update',
+        action='store_true',
+        help='Update vector store with changes since last update'
+    )
+
+    parser.add_argument(
         '--info',
         action='store_true',
         help='Show vector store information'
@@ -74,11 +90,11 @@ Using uv:
     args = parser.parse_args()
 
     # Check that at least one action is specified
-    if not any([args.init, args.force_init, args.info]):
-        parser.error("Please specify an action: --init, --force-init, or --info")
+    if not any([args.init, args.force_init, args.update, args.info]):
+        parser.error("Please specify an action: --init, --force-init, --update, or --info")
 
     # Check that only one action is specified
-    actions = sum([args.init, args.force_init, args.info])
+    actions = sum([args.init, args.force_init, args.update, args.info])
     if actions > 1:
         parser.error("Please specify only one action at a time")
 
@@ -191,6 +207,72 @@ Using uv:
         print(f"💡 Next Steps:")
         print(f"   1. Generate actual embeddings for the chunks")
         print(f"   2. Use the store for semantic code/document search")
+        print()
+        print("=" * 60)
+        sys.exit(0)
+
+    elif args.update:
+        # Update store
+        print("🔄 Updating vector store...")
+        print()
+
+        result = update_vector_store(str(repo_path))
+
+        if not result['success']:
+            # Handle different error types
+            if result['error_type'] == 'validation':
+                print(f"❌ Error: {result['error']}")
+            elif result['error_type'] == 'git_error':
+                print(f"❌ Git error: {result['error']}")
+            elif result['error_type'] == 'processing_error':
+                print(f"❌ Error updating vector store: {result['error']}")
+                if 'traceback' in result:
+                    print()
+                    print("Full error traceback:")
+                    print(result['traceback'])
+            else:
+                print(f"❌ Error: {result['error']}")
+
+            print()
+            print("=" * 60)
+            sys.exit(1)
+
+        # Success - display detailed information
+        print(f"📊 Comparing commits...")
+        print(f"   Old commit: {result['old_sha'][:8]}")
+        print(f"   New commit: {result['new_sha'][:8]}")
+        print()
+
+        if result['changed_files'] == 0:
+            print(f"✅ {result.get('message', 'No changes detected')}")
+        else:
+            print(f"📂 Found {result['changed_files']} changed file(s)")
+            print(f"   Processed {result['processed_files']} supported file(s)")
+            print()
+
+            print(f"🗑️  Deleted {result['chunks_deleted']} old chunk(s)")
+            print(f"➕ Added {result['chunks_added']} new chunk(s)")
+
+            # Show processing errors if any
+            if result.get('processing_errors'):
+                print()
+                print(f"⚠️  Encountered {len(result['processing_errors'])} file processing errors:")
+                for file_path, error in result['processing_errors'][:5]:  # Show first 5
+                    print(f"   - {file_path}: {error}")
+                if len(result['processing_errors']) > 5:
+                    print(f"   ... and {len(result['processing_errors']) - 5} more")
+
+            print()
+            print(f"✅ Vector store updated successfully!")
+
+        print()
+        print(f"📊 Update Statistics:")
+        print(f"   Old SHA: {result['old_sha']}")
+        print(f"   New SHA: {result['new_sha']}")
+        print(f"   Changed files: {result['changed_files']}")
+        print(f"   Processed files: {result['processed_files']}")
+        print(f"   Chunks deleted: {result['chunks_deleted']}")
+        print(f"   Chunks added: {result['chunks_added']}")
         print()
         print("=" * 60)
         sys.exit(0)
