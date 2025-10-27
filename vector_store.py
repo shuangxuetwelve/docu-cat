@@ -5,7 +5,6 @@ Handles initialization and management of Milvus Lite vector database.
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import Optional, List, Dict
 from pymilvus import (
@@ -101,7 +100,7 @@ def get_supported_extensions() -> Dict[str, str]:
     return extension_map
 
 
-def scan_repository_files(repo_path: Path) -> List[tuple]:
+def scan_repository_files(repo_path: Path) -> tuple[List[tuple], Optional[str]]:
     """
     Scan repository for files with supported extensions.
 
@@ -109,7 +108,7 @@ def scan_repository_files(repo_path: Path) -> List[tuple]:
         repo_path: Path to the repository
 
     Returns:
-        list: List of tuples (file_path, file_type)
+        tuple: (list of tuples (file_path, file_type, absolute_path), error message or None)
     """
     supported_extensions = get_supported_extensions()
     supported_files = []
@@ -137,11 +136,10 @@ def scan_repository_files(repo_path: Path) -> List[tuple]:
                     except ValueError:
                         continue
 
-        return supported_files
+        return supported_files, None
 
     except Exception as e:
-        print(f"⚠️  Error scanning repository: {e}", file=sys.stderr)
-        return []
+        return [], f"Error scanning repository: {e}"
 
 
 def get_language_for_file_type(file_type: str) -> Optional[Language]:
@@ -181,7 +179,7 @@ def get_language_for_file_type(file_type: str) -> Optional[Language]:
     return language_map.get(file_type)
 
 
-def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
+def split_file_into_chunks(file_path: str, file_type: str) -> tuple[List[str], Optional[str]]:
     """
     Split a file into chunks using RecursiveCharacterTextSplitter.
     Uses language-specific splitting when available for better chunk boundaries.
@@ -191,7 +189,7 @@ def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
         file_type: Type of file (for language-specific splitting)
 
     Returns:
-        list: List of text chunks
+        tuple: (list of text chunks, error message or None)
     """
     try:
         # Read file content
@@ -200,7 +198,7 @@ def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
 
         # Skip empty files
         if not content.strip():
-            return []
+            return [], None
 
         # Try to use language-specific splitter
         language = get_language_for_file_type(file_type)
@@ -223,14 +221,13 @@ def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
         # Split the content
         chunks = splitter.split_text(content)
 
-        return chunks
+        return chunks, None
 
     except Exception as e:
-        print(f"⚠️  Error splitting file {file_path}: {e}", file=sys.stderr)
-        return []
+        return [], f"Error splitting file {file_path}: {e}"
 
 
-def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
+def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
     """
     Initialize an empty Milvus Lite vector store.
 
@@ -239,19 +236,40 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
         force: If True, recreate the store even if it exists
 
     Returns:
-        bool: True if successful, False otherwise
+        dict: Result containing 'success' (bool), and additional data or error message
+              On success: {
+                  'success': True,
+                  'db_path': str,
+                  'collection_name': str,
+                  'files_scanned': int,
+                  'files_processed': int,
+                  'chunks_stored': int,
+                  'embedding_dim': int,
+                  'store_existed': bool
+              }
+              On failure: {
+                  'success': False,
+                  'error': str,
+                  'error_type': str  # 'validation', 'already_exists', 'scan_error', 'processing_error'
+              }
     """
     try:
         repo_path = Path(repo_path).resolve()
 
         # Validate repository path
         if not repo_path.exists():
-            print(f"❌ Error: Repository path does not exist: {repo_path}", file=sys.stderr)
-            return False
+            return {
+                'success': False,
+                'error': f"Repository path does not exist: {repo_path}",
+                'error_type': 'validation'
+            }
 
         if not repo_path.is_dir():
-            print(f"❌ Error: Path is not a directory: {repo_path}", file=sys.stderr)
-            return False
+            return {
+                'success': False,
+                'error': f"Path is not a directory: {repo_path}",
+                'error_type': 'validation'
+            }
 
         # Create .docucat directory
         docucat_dir = get_vector_store_path(repo_path)
@@ -259,17 +277,20 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
 
         # Check if store already exists
         if milvus_db_path.exists() and not force:
-            print(f"⚠️  Vector store already exists at: {docucat_dir}")
-            print(f"   Use 'rag --force-init' to recreate it")
-            return False
+            return {
+                'success': False,
+                'error': f"Vector store already exists at: {docucat_dir}",
+                'error_type': 'already_exists',
+                'store_path': str(docucat_dir)
+            }
 
         # Create directory if it doesn't exist
         docucat_dir.mkdir(parents=True, exist_ok=True)
-        print(f"📁 Created directory: {docucat_dir}")
 
         # If force is True and DB exists, remove it
+        store_existed = False
         if force and milvus_db_path.exists():
-            print(f"🗑️  Removing existing database...")
+            store_existed = True
             # Need to disconnect first if connected
             try:
                 connections.disconnect("default")
@@ -279,7 +300,6 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
             milvus_db_path.unlink()
 
         # Connect to Milvus Lite
-        print(f"🔌 Connecting to Milvus Lite...")
         connections.connect(
             alias="default",
             uri=str(milvus_db_path)
@@ -287,11 +307,9 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
 
         # Drop collection if it exists (for force mode)
         if force and utility.has_collection(DEFAULT_COLLECTION_NAME):
-            print(f"🗑️  Dropping existing collection: {DEFAULT_COLLECTION_NAME}")
             utility.drop_collection(DEFAULT_COLLECTION_NAME)
 
         # Create collection schema
-        print(f"📋 Creating collection schema...")
         fields = [
             FieldSchema(
                 name="id",
@@ -333,7 +351,6 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
         )
 
         # Create collection
-        print(f"🗃️  Creating collection: {DEFAULT_COLLECTION_NAME}")
         collection = Collection(
             name=DEFAULT_COLLECTION_NAME,
             schema=schema,
@@ -341,7 +358,6 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
         )
 
         # Create index for vector field
-        print(f"🔍 Creating index for vector search...")
         index_params = {
             "index_type": "FLAT",  # Simple exact search, good for small datasets
             "metric_type": "L2",   # L2 distance
@@ -353,30 +369,34 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
             index_params=index_params
         )
 
-        print(f"✅ Collection created successfully!")
-        print()
-
         # Scan repository for supported files
-        print(f"📂 Scanning repository for supported files...")
-        supported_files = scan_repository_files(repo_path)
+        supported_files, scan_error = scan_repository_files(repo_path)
+
+        if scan_error:
+            connections.disconnect("default")
+            return {
+                'success': False,
+                'error': scan_error,
+                'error_type': 'scan_error'
+            }
 
         if not supported_files:
-            print(f"⚠️  No supported files found in repository")
-            print()
-            print(f"📊 Final Statistics:")
-            print(f"   Files scanned: 0")
-            print(f"   Chunks stored: 0")
-            print()
             connections.disconnect("default")
-            return True
-
-        print(f"   Found {len(supported_files)} supported file(s)")
-        print()
+            return {
+                'success': True,
+                'db_path': str(milvus_db_path),
+                'collection_name': DEFAULT_COLLECTION_NAME,
+                'files_scanned': 0,
+                'files_processed': 0,
+                'chunks_stored': 0,
+                'embedding_dim': EMBEDDING_DIM,
+                'store_existed': store_existed
+            }
 
         # Process files and insert chunks
-        print(f"📝 Processing files and creating chunks...")
         total_chunks = 0
         files_processed = 0
+        processing_errors = []
 
         # Prepare data for batch insert
         file_paths = []
@@ -385,7 +405,11 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
         embeddings = []
 
         for relative_path, file_type, absolute_path in supported_files:
-            chunks = split_file_into_chunks(absolute_path, file_type)
+            chunks, error = split_file_into_chunks(absolute_path, file_type)
+
+            if error:
+                processing_errors.append((relative_path, error))
+                continue
 
             if chunks:
                 files_processed += 1
@@ -397,16 +421,8 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
                     embeddings.append([0.0] * EMBEDDING_DIM)
                     total_chunks += 1
 
-                if files_processed % 10 == 0:
-                    print(f"   Processed {files_processed}/{len(supported_files)} files...")
-
-        print(f"   Processed all {files_processed} files")
-        print()
-
         # Insert data into collection
         if total_chunks > 0:
-            print(f"💾 Inserting {total_chunks} chunks into vector store...")
-
             data = [
                 file_paths,
                 contents,
@@ -417,36 +433,30 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
             collection.insert(data)
             collection.flush()
 
-            print(f"   ✓ All chunks inserted successfully")
-        else:
-            print(f"⚠️  No chunks created (all files might be empty)")
-
-        print()
-        print(f"✅ Vector store initialized and populated!")
-        print()
-        print(f"📊 Final Statistics:")
-        print(f"   Database Path: {milvus_db_path}")
-        print(f"   Collection: {DEFAULT_COLLECTION_NAME}")
-        print(f"   Files scanned: {len(supported_files)}")
-        print(f"   Files processed: {files_processed}")
-        print(f"   Chunks stored: {total_chunks}")
-        print(f"   Embedding Dimension: {EMBEDDING_DIM}")
-        print()
-        print(f"💡 Next Steps:")
-        print(f"   1. Generate actual embeddings for the chunks")
-        print(f"   2. Use the store for semantic code/document search")
-        print()
-
         # Disconnect
         connections.disconnect("default")
 
-        return True
+        return {
+            'success': True,
+            'db_path': str(milvus_db_path),
+            'collection_name': DEFAULT_COLLECTION_NAME,
+            'files_scanned': len(supported_files),
+            'files_processed': files_processed,
+            'chunks_stored': total_chunks,
+            'embedding_dim': EMBEDDING_DIM,
+            'store_existed': store_existed,
+            'processing_errors': processing_errors if processing_errors else None
+        }
 
     except Exception as e:
-        print(f"❌ Error initializing vector store: {e}", file=sys.stderr)
         import traceback
-        traceback.print_exc()
-        return False
+        error_trace = traceback.format_exc()
+        return {
+            'success': False,
+            'error': str(e),
+            'error_type': 'processing_error',
+            'traceback': error_trace
+        }
 
 
 def check_vector_store(repo_path: str) -> bool:
@@ -477,8 +487,7 @@ def check_vector_store(repo_path: str) -> bool:
 
         return has_collection
 
-    except Exception as e:
-        print(f"⚠️  Error checking vector store: {e}", file=sys.stderr)
+    except Exception:
         return False
 
 
@@ -522,55 +531,5 @@ def get_store_info(repo_path: str) -> Optional[dict]:
 
         return info
 
-    except Exception as e:
-        print(f"⚠️  Error getting store info: {e}", file=sys.stderr)
+    except Exception:
         return None
-
-
-if __name__ == "__main__":
-    """Command-line interface for vector store operations."""
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Initialize Milvus Lite vector store for DocuCat"
-    )
-    parser.add_argument(
-        "repo_path",
-        help="Path to the target repository"
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force recreation of existing vector store"
-    )
-    parser.add_argument(
-        "--info",
-        action="store_true",
-        help="Show vector store information"
-    )
-
-    args = parser.parse_args()
-
-    print("=" * 60)
-    print("DocuCat Vector Store Manager")
-    print("=" * 60)
-    print()
-
-    if args.info:
-        # Show store info
-        info = get_store_info(args.repo_path)
-        if info:
-            print(f"📊 Vector Store Information:")
-            print(f"   Path: {info['path']}")
-            print(f"   Collection: {info['collection_name']}")
-            print(f"   Documents: {info['num_documents']}")
-            print(f"   Embedding Dimension: {info['embedding_dim']}")
-            sys.exit(0)
-        else:
-            print(f"❌ No vector store found or error accessing store")
-            sys.exit(1)
-
-    else:
-        # Initialize store
-        success = initialize_vector_store(args.repo_path, force=args.force)
-        sys.exit(0 if success else 1)

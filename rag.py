@@ -118,15 +118,82 @@ Using uv:
         print("🚀 Initializing vector store...")
         print()
 
-        success = initialize_vector_store(str(repo_path), force=args.force_init)
+        result = initialize_vector_store(str(repo_path), force=args.force_init)
 
-        if success:
-            print("=" * 60)
-            sys.exit(0)
-        else:
+        if not result['success']:
+            # Handle different error types
+            if result['error_type'] == 'validation':
+                print(f"❌ Error: {result['error']}")
+            elif result['error_type'] == 'already_exists':
+                print(f"⚠️  {result['error']}")
+                print(f"   Use 'rag --force-init' to recreate it")
+            elif result['error_type'] == 'scan_error':
+                print(f"❌ Error scanning repository: {result['error']}")
+            elif result['error_type'] == 'processing_error':
+                print(f"❌ Error initializing vector store: {result['error']}")
+                if 'traceback' in result:
+                    print()
+                    print("Full error traceback:")
+                    print(result['traceback'])
+            else:
+                print(f"❌ Error: {result['error']}")
+
             print()
             print("=" * 60)
             sys.exit(1)
+
+        # Success - display detailed information
+        print(f"📁 Created directory")
+        if result.get('store_existed'):
+            print(f"🗑️  Removed existing database")
+        print(f"🔌 Connected to Milvus Lite")
+        print(f"📋 Created collection schema")
+        print(f"🗃️  Created collection: {result['collection_name']}")
+        print(f"🔍 Created index for vector search")
+        print(f"✅ Collection created successfully!")
+        print()
+
+        print(f"📂 Scanned repository for supported files")
+        print(f"   Found {result['files_scanned']} supported file(s)")
+        print()
+
+        if result['files_scanned'] > 0:
+            print(f"📝 Processed files and created chunks")
+            print(f"   Processed {result['files_processed']}/{result['files_scanned']} files")
+            print()
+
+            if result['chunks_stored'] > 0:
+                print(f"💾 Inserted {result['chunks_stored']} chunks into vector store")
+                print(f"   ✓ All chunks inserted successfully")
+            else:
+                print(f"⚠️  No chunks created (all files might be empty)")
+
+            # Show processing errors if any
+            if result.get('processing_errors'):
+                print()
+                print(f"⚠️  Encountered {len(result['processing_errors'])} file processing errors:")
+                for file_path, error in result['processing_errors'][:5]:  # Show first 5
+                    print(f"   - {file_path}: {error}")
+                if len(result['processing_errors']) > 5:
+                    print(f"   ... and {len(result['processing_errors']) - 5} more")
+
+        print()
+        print(f"✅ Vector store initialized and populated!")
+        print()
+        print(f"📊 Final Statistics:")
+        print(f"   Database Path: {result['db_path']}")
+        print(f"   Collection: {result['collection_name']}")
+        print(f"   Files scanned: {result['files_scanned']}")
+        print(f"   Files processed: {result['files_processed']}")
+        print(f"   Chunks stored: {result['chunks_stored']}")
+        print(f"   Embedding Dimension: {result['embedding_dim']}")
+        print()
+        print(f"💡 Next Steps:")
+        print(f"   1. Generate actual embeddings for the chunks")
+        print(f"   2. Use the store for semantic code/document search")
+        print()
+        print("=" * 60)
+        sys.exit(0)
 
 
 if __name__ == '__main__':
