@@ -295,11 +295,6 @@ if __name__ == "__main__":
         help="Force recreation of existing vector store"
     )
     parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check if vector store exists"
-    )
-    parser.add_argument(
         "--info",
         action="store_true",
         help="Show vector store information"
@@ -312,17 +307,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print()
 
-    if args.check:
-        # Check if store exists
-        exists = check_vector_store(args.repo_path)
-        if exists:
-            print(f"✅ Vector store exists at: {get_vector_store_path(args.repo_path)}")
-            sys.exit(0)
-        else:
-            print(f"❌ No vector store found at: {get_vector_store_path(args.repo_path)}")
-            sys.exit(1)
-
-    elif args.info:
+    if args.info:
         # Show store info
         info = get_store_info(args.repo_path)
         if info:

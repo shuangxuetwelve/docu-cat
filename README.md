@@ -224,9 +224,6 @@ uv run python init_vector_store.py /path/to/repo
 # Force recreation of existing store
 uv run python init_vector_store.py /path/to/repo --force
 
-# Check if vector store exists
-uv run python init_vector_store.py /path/to/repo --check
-
 # Show vector store information
 uv run python init_vector_store.py /path/to/repo --info
 ```

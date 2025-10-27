@@ -32,9 +32,6 @@ Examples:
   # Force recreation of existing store
   python init_vector_store.py /path/to/repo --force
 
-  # Check if vector store exists
-  python init_vector_store.py /path/to/repo --check
-
   # Show vector store information
   python init_vector_store.py /path/to/repo --info
 
@@ -57,12 +54,6 @@ Using uv:
     )
 
     parser.add_argument(
-        '--check',
-        action='store_true',
-        help='Check if vector store exists'
-    )
-
-    parser.add_argument(
         '--info',
         action='store_true',
         help='Show vector store information'
@@ -81,19 +72,7 @@ Using uv:
     print(f"📁 Vector Store: {get_vector_store_path(repo_path)}")
     print()
 
-    if args.check:
-        # Check if store exists
-        print("🔍 Checking vector store...")
-        exists = check_vector_store(str(repo_path))
-
-        if exists:
-            print(f"✅ Vector store exists and is valid")
-            sys.exit(0)
-        else:
-            print(f"❌ No vector store found or store is invalid")
-            sys.exit(1)
-
-    elif args.info:
+    if args.info:
         # Show store info
         print("📊 Getting vector store information...")
         info = get_store_info(str(repo_path))
