@@ -35,6 +35,7 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] Modify the command `init_vector_store`. The command name should be `rag`. The command of initializing a vector store is `rag --init`. The command to force initialing a vector store should be `rag --force-init`. The command to display the info is `rag --info`.
 [x] The file vector_store should not contain anything that are related to the command: 1. it cannot be run as a command, i.e., do not use argparse to accept arguments. 2. The functions should not print any user-facing messages. The functions can return important data and the `rag` command use those data to print user-facing messages.
 [x] When storing each chunk into the vector store, use Gemini embedding with task type `RETRIEVAL_DOCUMENT` to generate an embedding for each chunk. Use an embedding size of 1536. Use environment variable `GEMINI_API_KEY` for Gemini.
+[ ] Add a new tool for agents in the folder tools. The tool should accept a query to query chunks from the local vector store and returns the top 10 chunks that are more relevant to the query. The query should be embeded using Gemini embedding model `models/gemini-embedding-001` with a dimension 1536 and task type `RETRIEVAL_QUERY`. The new tool should be given to the agent analyzer if there are local vector store available.
 [ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...
 
