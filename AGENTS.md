@@ -31,7 +31,7 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] When running as a Github action, the agent should be aware of all comments of a pull request. The tasks of the agent should be subject to the instructions of the comments of the developers.
 [x] DocuCat should be triggered by a new comment mentioning @DocuCat.
 [x] Add a command to initialize the local vector store. The command runs locally and take an argument to the path of the target repository. It creates an empty Milvus Lite store inside the folder .docucat.
-[ ] When initializing the local vector store, it actually scans for all files in the repository whose file types are supported by langchain_text_splitters. It uses RecursiveCharacterTextSplitter to split chunks with chunk_size=200 and chunk_overlap=30. Files with file types that are not supported by langchain_text_splitters are not scanned. Store each chunk in the local vector store. In this task, leave the field `embedding` empty.
+[x] When initializing the local vector store, it actually scans for all files in the repository whose file types are supported by langchain_text_splitters. It uses RecursiveCharacterTextSplitter to split chunks with chunk_size=200 and chunk_overlap=30. Files with file types that are not supported by langchain_text_splitters are not scanned. Store each chunk in the local vector store. In this task, leave the field `embedding` empty.
 [ ] When storing each chunk into the vector store, use Gemini embedding with task type `RETRIEVAL_DOCUMENT` to generate an embedding for each chunk. Use an embedding size of 1536.
 [ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...

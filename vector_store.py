@@ -7,7 +7,7 @@ Handles initialization and management of Milvus Lite vector database.
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 from pymilvus import (
     connections,
     Collection,
@@ -16,6 +16,7 @@ from pymilvus import (
     DataType,
     utility,
 )
+from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 
 
 # Default collection name for code and document embeddings
@@ -51,6 +52,133 @@ def get_milvus_db_path(repo_path: str) -> Path:
         Path: Path to the Milvus database file
     """
     return get_vector_store_path(repo_path) / "milvus.db"
+
+
+def get_supported_extensions() -> Dict[str, str]:
+    """
+    Get mapping of file extensions to file types supported by langchain_text_splitters.
+
+    Returns:
+        dict: Mapping of file extension to file type
+    """
+    # Based on Language enum from langchain_text_splitters
+    extension_map = {
+        '.py': 'python',
+        '.js': 'javascript',
+        '.ts': 'typescript',
+        '.java': 'java',
+        '.cpp': 'cpp',
+        '.cc': 'cpp',
+        '.cxx': 'cpp',
+        '.c': 'c',
+        '.h': 'c',
+        '.hpp': 'cpp',
+        '.cs': 'csharp',
+        '.go': 'go',
+        '.rs': 'rust',
+        '.rb': 'ruby',
+        '.php': 'php',
+        '.swift': 'swift',
+        '.kt': 'kotlin',
+        '.scala': 'scala',
+        '.r': 'r',
+        '.m': 'objective-c',
+        '.mm': 'objective-c',
+        '.md': 'markdown',
+        '.tex': 'latex',
+        '.html': 'html',
+        '.htm': 'html',
+        '.xml': 'xml',
+        '.json': 'json',
+        '.yaml': 'yaml',
+        '.yml': 'yaml',
+        '.sh': 'bash',
+        '.bash': 'bash',
+        '.ps1': 'powershell',
+        '.sql': 'sql',
+        '.txt': 'text',
+    }
+    return extension_map
+
+
+def scan_repository_files(repo_path: Path) -> List[tuple]:
+    """
+    Scan repository for files with supported extensions.
+
+    Args:
+        repo_path: Path to the repository
+
+    Returns:
+        list: List of tuples (file_path, file_type)
+    """
+    supported_extensions = get_supported_extensions()
+    supported_files = []
+
+    # Directories to skip
+    skip_dirs = {'.git', '.docucat', '__pycache__', 'node_modules', '.venv', 'venv', 'env',
+                 '.pytest_cache', '.tox', 'dist', 'build', '.egg-info'}
+
+    try:
+        for root, dirs, files in os.walk(repo_path):
+            # Filter out skip directories
+            dirs[:] = [d for d in dirs if d not in skip_dirs and not d.startswith('.')]
+
+            root_path = Path(root)
+            for file in files:
+                file_path = root_path / file
+                file_ext = file_path.suffix.lower()
+
+                if file_ext in supported_extensions:
+                    # Get relative path from repo root
+                    try:
+                        relative_path = file_path.relative_to(repo_path)
+                        file_type = supported_extensions[file_ext]
+                        supported_files.append((str(relative_path), file_type, str(file_path)))
+                    except ValueError:
+                        continue
+
+        return supported_files
+
+    except Exception as e:
+        print(f"⚠️  Error scanning repository: {e}", file=sys.stderr)
+        return []
+
+
+def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
+    """
+    Split a file into chunks using RecursiveCharacterTextSplitter.
+
+    Args:
+        file_path: Absolute path to the file
+        file_type: Type of file (for language-specific splitting)
+
+    Returns:
+        list: List of text chunks
+    """
+    try:
+        # Read file content
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+        # Skip empty files
+        if not content.strip():
+            return []
+
+        # Create text splitter with specified parameters
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=200,
+            chunk_overlap=30,
+            length_function=len,
+        )
+
+        # Split the content
+        chunks = splitter.split_text(content)
+
+        return chunks
+
+    except Exception as e:
+        print(f"⚠️  Error splitting file {file_path}: {e}", file=sys.stderr)
+        return []
 
 
 def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
@@ -176,15 +304,87 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
             index_params=index_params
         )
 
-        print(f"✅ Vector store initialized successfully!")
+        print(f"✅ Collection created successfully!")
         print()
-        print(f"📊 Collection Details:")
-        print(f"   Name: {DEFAULT_COLLECTION_NAME}")
-        print(f"   Embedding Dimension: {EMBEDDING_DIM}")
+
+        # Scan repository for supported files
+        print(f"📂 Scanning repository for supported files...")
+        supported_files = scan_repository_files(repo_path)
+
+        if not supported_files:
+            print(f"⚠️  No supported files found in repository")
+            print()
+            print(f"📊 Final Statistics:")
+            print(f"   Files scanned: 0")
+            print(f"   Chunks stored: 0")
+            print()
+            connections.disconnect("default")
+            return True
+
+        print(f"   Found {len(supported_files)} supported file(s)")
+        print()
+
+        # Process files and insert chunks
+        print(f"📝 Processing files and creating chunks...")
+        total_chunks = 0
+        files_processed = 0
+
+        # Prepare data for batch insert
+        file_paths = []
+        contents = []
+        file_types = []
+        embeddings = []
+
+        for relative_path, file_type, absolute_path in supported_files:
+            chunks = split_file_into_chunks(absolute_path, file_type)
+
+            if chunks:
+                files_processed += 1
+                for chunk in chunks:
+                    file_paths.append(relative_path)
+                    contents.append(chunk[:65535])  # Ensure within max length
+                    file_types.append(file_type)
+                    # Empty embedding - use zero vector
+                    embeddings.append([0.0] * EMBEDDING_DIM)
+                    total_chunks += 1
+
+                if files_processed % 10 == 0:
+                    print(f"   Processed {files_processed}/{len(supported_files)} files...")
+
+        print(f"   Processed all {files_processed} files")
+        print()
+
+        # Insert data into collection
+        if total_chunks > 0:
+            print(f"💾 Inserting {total_chunks} chunks into vector store...")
+
+            data = [
+                file_paths,
+                contents,
+                file_types,
+                embeddings
+            ]
+
+            collection.insert(data)
+            collection.flush()
+
+            print(f"   ✓ All chunks inserted successfully")
+        else:
+            print(f"⚠️  No chunks created (all files might be empty)")
+
+        print()
+        print(f"✅ Vector store initialized and populated!")
+        print()
+        print(f"📊 Final Statistics:")
         print(f"   Database Path: {milvus_db_path}")
+        print(f"   Collection: {DEFAULT_COLLECTION_NAME}")
+        print(f"   Files scanned: {len(supported_files)}")
+        print(f"   Files processed: {files_processed}")
+        print(f"   Chunks stored: {total_chunks}")
+        print(f"   Embedding Dimension: {EMBEDDING_DIM}")
         print()
         print(f"💡 Next Steps:")
-        print(f"   1. Run embedding generation to populate the store")
+        print(f"   1. Generate actual embeddings for the chunks")
         print(f"   2. Use the store for semantic code/document search")
         print()
 

@@ -243,9 +243,14 @@ docu-cat-init-store /path/to/repo --force
 - Creates a `.docucat` directory in your repository
 - Initializes a Milvus Lite vector database
 - Sets up a collection for code/document embeddings
-- Prepares for semantic search capabilities
+- Scans all files with supported extensions (Python, JavaScript, Markdown, etc.)
+- Splits files into chunks (200 characters with 30 character overlap)
+- Stores chunks in the database (embeddings are empty/zero vectors initially)
 
-**Note:** The `.docucat` directory is automatically ignored by git. The vector store uses sentence-transformers for embeddings (384-dimension vectors).
+**Supported file types:**
+Python, JavaScript, TypeScript, Java, C/C++, C#, Go, Rust, Ruby, PHP, Swift, Kotlin, Scala, R, Objective-C, Markdown, LaTeX, HTML, XML, JSON, YAML, Bash, PowerShell, SQL, and plain text.
+
+**Note:** The `.docucat` directory is automatically ignored by git. The vector store uses sentence-transformers for embeddings (384-dimension vectors). Chunks are stored with zero vectors initially - you can generate actual embeddings in a future step.
 
 ## Current Features
 
