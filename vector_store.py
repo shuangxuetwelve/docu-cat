@@ -5,6 +5,8 @@ Handles initialization and management of Milvus Lite vector database.
 """
 
 import os
+import json
+import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict
 from pymilvus import (
@@ -51,6 +53,68 @@ def get_milvus_db_path(repo_path: str) -> Path:
         Path: Path to the Milvus database file
     """
     return get_vector_store_path(repo_path) / "milvus.db"
+
+
+def get_store_json_path(repo_path: str) -> Path:
+    """
+    Get the path to the store.json metadata file.
+
+    Args:
+        repo_path: Path to the repository
+
+    Returns:
+        Path: Path to the store.json file
+    """
+    return get_vector_store_path(repo_path) / "store.json"
+
+
+def get_current_git_sha(repo_path: Path) -> Optional[str]:
+    """
+    Get the full SHA of the current git commit.
+
+    Args:
+        repo_path: Path to the git repository
+
+    Returns:
+        str: Full SHA of the current commit, or None if not a git repo or error occurs
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def save_store_metadata(repo_path: Path, commit_sha: str) -> bool:
+    """
+    Save metadata to store.json file in the .docucat directory.
+
+    Args:
+        repo_path: Path to the repository
+        commit_sha: Full SHA of the current commit
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        store_json_path = get_store_json_path(repo_path)
+
+        metadata = {
+            "last_update_sha": commit_sha
+        }
+
+        with open(store_json_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2)
+
+        return True
+    except Exception:
+        return False
 
 
 def create_embeddings_model():
@@ -403,6 +467,12 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
 
         if not supported_files:
             connections.disconnect("default")
+
+            # Save metadata to store.json
+            commit_sha = get_current_git_sha(repo_path)
+            if commit_sha:
+                save_store_metadata(repo_path, commit_sha)
+
             return {
                 'success': True,
                 'db_path': str(milvus_db_path),
@@ -489,6 +559,11 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> Dict:
 
         # Disconnect
         connections.disconnect("default")
+
+        # Save metadata to store.json
+        commit_sha = get_current_git_sha(repo_path)
+        if commit_sha:
+            save_store_metadata(repo_path, commit_sha)
 
         return {
             'success': True,

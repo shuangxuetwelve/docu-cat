@@ -36,7 +36,7 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] The file vector_store should not contain anything that are related to the command: 1. it cannot be run as a command, i.e., do not use argparse to accept arguments. 2. The functions should not print any user-facing messages. The functions can return important data and the `rag` command use those data to print user-facing messages.
 [x] When storing each chunk into the vector store, use Gemini embedding with task type `RETRIEVAL_DOCUMENT` to generate an embedding for each chunk. Use an embedding size of 1536. Use environment variable `GEMINI_API_KEY` for Gemini.
 [x] Add a new tool for agents in the folder tools. The tool should accept a query to query chunks from the local vector store and returns the top 10 chunks that are more relevant to the query. The query should be embeded using Gemini embedding model `models/gemini-embedding-001` with a dimension 1536 and task type `RETRIEVAL_QUERY`. The new tool should be given to the agent analyzer if there are local vector store available.
-[ ] When initializing the local vector database, add a JSON file "store.json" to the folder .docucat in the target repository if it does not exist. Add a property "last_update_sha": "<full-sha>" which points to the full SHA of the latest commit when updating the vector store last time.
+[x] When initializing the local vector database, add a JSON file "store.json" to the folder .docucat in the target repository if it does not exist. Add a property "last_update_sha": "<full-sha>" which points to the full SHA of the latest commit when updating the vector store last time.
 [ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...
 
