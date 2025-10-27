@@ -10,6 +10,37 @@ When DocuCat runs on a pull request, it:
 2. **Parses instructions** - Uses Claude Haiku 4.5 to understand developer intent
 3. **Follows instructions** - Incorporates the guidance into its analysis and updates
 
+## Triggering DocuCat Manually
+
+In addition to running automatically on PR events, you can trigger DocuCat on-demand by posting a comment with a trigger phrase:
+
+```markdown
+@DocuCat
+```
+
+or
+
+```markdown
+run docu-cat
+```
+
+When you post a comment with these phrases, DocuCat will:
+- React to your comment with 🚀 to confirm it's running
+- Analyze the current state of the PR
+- Follow any instructions in PR comments (including your trigger comment)
+- Update documentation if needed
+- Post a summary comment with results
+
+**Combining trigger with instructions:**
+
+You can trigger DocuCat and give instructions in the same comment:
+
+```markdown
+@DocuCat please update the API docs with the new authentication flow
+```
+
+This will both trigger DocuCat to run immediately and instruct it on what to focus on.
+
 ## Giving Instructions to DocuCat
 
 You can give instructions to DocuCat by adding comments to your pull request. DocuCat understands natural language instructions and various mention patterns.

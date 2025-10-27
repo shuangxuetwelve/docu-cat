@@ -108,6 +108,48 @@ DocuCat: update README.md and CHANGELOG.md with the breaking changes
 
 See [docs/DEVELOPER_INSTRUCTIONS.md](docs/DEVELOPER_INSTRUCTIONS.md) for complete guide and examples.
 
+### Triggering DocuCat On-Demand via Comments
+
+In addition to automatic triggers on PR creation and updates, you can manually trigger DocuCat by posting a comment on your pull request. This is useful when you want to re-run DocuCat without pushing new commits.
+
+**To trigger DocuCat manually, post a comment with one of these phrases:**
+
+```markdown
+@DocuCat
+```
+
+```markdown
+run docu-cat
+```
+
+```markdown
+@docu-cat
+```
+
+DocuCat will:
+1. Detect the trigger phrase in your comment
+2. React to your comment with a 🚀 emoji to confirm it's running
+3. Analyze the current state of the PR
+4. Update documentation if needed
+5. Post a summary comment with the results
+
+**Setting up comment-triggered execution:**
+
+Copy the workflow file from `.github/workflows/comment-trigger.yml` to your repository, or add the following workflow:
+
+```yaml
+name: DocuCat - Comment Triggered
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  # ... (see .github/workflows/comment-trigger.yml for complete configuration)
+```
+
+**Note:** The comment trigger workflow requires the same permissions and secrets as the automatic workflow (`GITHUB_TOKEN` and `OPENROUTER_API_KEY`).
+
 ### Running DocuCat Locally
 
 You can run DocuCat locally to analyze recent commits in any repository:
@@ -174,6 +216,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - ✅ Automatically updates documentation and creates commits
 - ✅ Posts summary comments to pull requests
 - ✅ Follows developer instructions from PR comments
+- ✅ Manual triggering via PR comments (on-demand execution)
 - ✅ Per-PR configuration via PR description
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
@@ -230,7 +273,8 @@ docu-cat/
 │   └── write_file.py               # File writing tool
 └── .github/
     └── workflows/
-        └── example.yml             # Example workflow configuration
+        ├── example.yml             # Example workflow configuration
+        └── comment-trigger.yml     # Comment-triggered workflow
 ```
 
 ### Implementation Details
@@ -245,9 +289,14 @@ docu-cat/
 
 ## How It Works
 
-When a pull request is created or updated:
+DocuCat can be triggered in two ways:
 
-1. DocuCat checks out the repository
+**Automatic Trigger:** When a pull request is created or updated
+**Manual Trigger:** When a comment with `@DocuCat` or similar phrase is posted on a PR
+
+When triggered, DocuCat:
+
+1. Checks out the repository
 2. Reads configuration from the PR description (if any)
 3. Checks if DocuCat is enabled for this PR
 4. Detects changed files between base and head commits
