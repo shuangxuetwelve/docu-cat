@@ -23,7 +23,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 DEFAULT_COLLECTION_NAME = "docu_cat_embeddings"
 
 # Embedding dimension for Gemini
-EMBEDDING_DIM = 1536
+EMBEDDING_DIM = 256
 
 
 def get_vector_store_path(repo_path: str) -> Path:

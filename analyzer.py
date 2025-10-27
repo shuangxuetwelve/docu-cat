@@ -196,7 +196,7 @@ Your task is to:
    - Common documents to check:
      * README.md - If project structure, features, or usage changed
      * Other .md files as needed
-   - Determine the code comments that are relevant to the changes and query the local vector store for relevant code/document chunks, if you are provided with the tool.
+   - Determine the the documents and code comments that are relevant to the changes and query the local vector store for relevant code/document chunks, if you are provided with the tool.
 
 3. UPDATE DOCUMENTS:
    For each document that needs updates:
