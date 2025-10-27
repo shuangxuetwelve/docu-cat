@@ -242,7 +242,9 @@ def get_supported_extensions() -> Dict[str, str]:
     extension_map = {
         '.py': 'python',
         '.js': 'javascript',
+        '.jsx': 'javascript',
         '.ts': 'typescript',
+        '.tsx': 'typescript',
         '.java': 'java',
         '.cpp': 'cpp',
         '.cc': 'cpp',
