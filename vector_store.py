@@ -144,9 +144,47 @@ def scan_repository_files(repo_path: Path) -> List[tuple]:
         return []
 
 
+def get_language_for_file_type(file_type: str) -> Optional[Language]:
+    """
+    Get Language enum value for file type if supported.
+
+    Args:
+        file_type: File type string (e.g., 'python', 'javascript')
+
+    Returns:
+        Language enum value or None if not supported
+    """
+    # Map file types to Language enum
+    # Based on available Language enum values in langchain_text_splitters
+    language_map = {
+        'c': Language.C,
+        'cpp': Language.CPP,
+        'csharp': Language.CSHARP,
+        'go': Language.GO,
+        'java': Language.JAVA,
+        'javascript': Language.JS,
+        'typescript': Language.TS,
+        'kotlin': Language.KOTLIN,
+        'php': Language.PHP,
+        'python': Language.PYTHON,
+        'ruby': Language.RUBY,
+        'rust': Language.RUST,
+        'scala': Language.SCALA,
+        'swift': Language.SWIFT,
+        'html': Language.HTML,
+        'latex': Language.LATEX,
+        'markdown': Language.MARKDOWN,
+        'powershell': Language.POWERSHELL,
+        # Note: Some file types don't have language-specific splitters
+        # and will fall back to generic splitting (e.g., objective-c, r, bash, etc.)
+    }
+    return language_map.get(file_type)
+
+
 def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
     """
     Split a file into chunks using RecursiveCharacterTextSplitter.
+    Uses language-specific splitting when available for better chunk boundaries.
 
     Args:
         file_path: Absolute path to the file
@@ -164,12 +202,23 @@ def split_file_into_chunks(file_path: str, file_type: str) -> List[str]:
         if not content.strip():
             return []
 
-        # Create text splitter with specified parameters
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=200,
-            chunk_overlap=30,
-            length_function=len,
-        )
+        # Try to use language-specific splitter
+        language = get_language_for_file_type(file_type)
+
+        if language:
+            # Use language-specific splitter for better chunk boundaries
+            splitter = RecursiveCharacterTextSplitter.from_language(
+                language=language,
+                chunk_size=200,
+                chunk_overlap=30,
+            )
+        else:
+            # Fall back to generic splitter for unsupported languages
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=200,
+                chunk_overlap=30,
+                length_function=len,
+            )
 
         # Split the content
         chunks = splitter.split_text(content)
