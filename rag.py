@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-DocuCat Vector Store Initialization
-Command-line tool to initialize Milvus Lite vector store for a repository.
+DocuCat RAG (Retrieval-Augmented Generation) Tool
+Command-line tool to manage vector store for semantic search.
 """
 
 import sys
@@ -10,46 +10,58 @@ from pathlib import Path
 
 from vector_store import (
     initialize_vector_store,
-    check_vector_store,
     get_store_info,
     get_vector_store_path,
 )
 
 
 def main():
-    """Main entry point for vector store initialization."""
+    """Main entry point for RAG operations."""
     parser = argparse.ArgumentParser(
-        description='Initialize Milvus Lite vector store for DocuCat',
+        description='DocuCat RAG - Manage vector store for semantic search',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # Initialize vector store in current directory
-  python init_vector_store.py .
+  rag --init
 
   # Initialize vector store in a specific repository
-  python init_vector_store.py /path/to/repo
+  rag --init /path/to/repo
 
   # Force recreation of existing store
-  python init_vector_store.py /path/to/repo --force
+  rag --force-init /path/to/repo
 
   # Show vector store information
-  python init_vector_store.py /path/to/repo --info
+  rag --info
+
+  # Show info for specific repository
+  rag --info /path/to/repo
 
 Using uv:
-  uv run python init_vector_store.py .
-  uv run python init_vector_store.py /path/to/repo --force
+  uv run python rag.py --init
+  uv run python rag.py --force-init /path/to/repo
+  uv run python rag.py --info
         """
     )
 
     parser.add_argument(
         'repo_path',
         type=str,
-        help='Path to the target repository'
+        nargs='?',
+        default='.',
+        help='Path to the target repository (default: current directory)'
     )
 
     parser.add_argument(
-        '--force',
+        '--init',
         action='store_true',
+        help='Initialize vector store'
+    )
+
+    parser.add_argument(
+        '--force-init',
+        action='store_true',
+        dest='force_init',
         help='Force recreation of existing vector store'
     )
 
@@ -61,11 +73,20 @@ Using uv:
 
     args = parser.parse_args()
 
+    # Check that at least one action is specified
+    if not any([args.init, args.force_init, args.info]):
+        parser.error("Please specify an action: --init, --force-init, or --info")
+
+    # Check that only one action is specified
+    actions = sum([args.init, args.force_init, args.info])
+    if actions > 1:
+        parser.error("Please specify only one action at a time")
+
     # Convert to absolute path
     repo_path = Path(args.repo_path).resolve()
 
     print("=" * 60)
-    print("DocuCat Vector Store Manager")
+    print("DocuCat RAG - Vector Store Manager")
     print("=" * 60)
     print()
     print(f"📂 Repository: {repo_path}")
@@ -92,12 +113,12 @@ Using uv:
             print()
             sys.exit(1)
 
-    else:
+    elif args.init or args.force_init:
         # Initialize store
         print("🚀 Initializing vector store...")
         print()
 
-        success = initialize_vector_store(str(repo_path), force=args.force)
+        success = initialize_vector_store(str(repo_path), force=args.force_init)
 
         if success:
             print("=" * 60)

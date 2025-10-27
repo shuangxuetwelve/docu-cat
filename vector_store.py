@@ -260,7 +260,7 @@ def initialize_vector_store(repo_path: str, force: bool = False) -> bool:
         # Check if store already exists
         if milvus_db_path.exists() and not force:
             print(f"⚠️  Vector store already exists at: {docucat_dir}")
-            print(f"   Use --force to recreate it")
+            print(f"   Use 'rag --force-init' to recreate it")
             return False
 
         # Create directory if it doesn't exist

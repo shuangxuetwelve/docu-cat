@@ -18,7 +18,7 @@ dependencies = [
 
 [project.scripts]
 docu-cat = "main:main"
-docu-cat-init-store = "init_vector_store:main"
+rag = "rag:main"
 
 [project.optional-dependencies]
 dev = []

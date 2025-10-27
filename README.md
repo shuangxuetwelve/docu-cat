@@ -216,16 +216,19 @@ DocuCat can create a local vector store using Milvus Lite to enable semantic sea
 
 ```bash
 # Initialize in current directory
-uv run python init_vector_store.py .
+uv run python rag.py --init
 
 # Initialize in a specific repository
-uv run python init_vector_store.py /path/to/repo
+uv run python rag.py --init /path/to/repo
 
 # Force recreation of existing store
-uv run python init_vector_store.py /path/to/repo --force
+uv run python rag.py --force-init /path/to/repo
 
 # Show vector store information
-uv run python init_vector_store.py /path/to/repo --info
+uv run python rag.py --info
+
+# Show info for specific repository
+uv run python rag.py --info /path/to/repo
 ```
 
 Or using the installed command:
@@ -235,8 +238,10 @@ Or using the installed command:
 uv pip install -e .
 
 # Use the command
-docu-cat-init-store .
-docu-cat-init-store /path/to/repo --force
+rag --init
+rag --init /path/to/repo
+rag --force-init /path/to/repo
+rag --info
 ```
 
 **What it does:**
@@ -304,7 +309,7 @@ docu-cat/
 ├── main.py                         # CLI entry point for local execution
 ├── run_docu_cat_github.py          # Entry file for DocuCat GitHub Action
 ├── comment_reply_agent.py          # Entry file for comment reply agent
-├── init_vector_store.py            # Entry file for vector store initialization
+├── rag.py                          # RAG command for vector store operations
 ├── vector_store.py                 # Vector store management module
 ├── analyzer.py                     # LangGraph workflow for AI analysis
 ├── configuration_expert.py         # AI agent for parsing PR configurations
