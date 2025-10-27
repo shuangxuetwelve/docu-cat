@@ -208,6 +208,48 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - Store it in a `.env` file (recommended) or set as an environment variable
 - OpenRouter provides access to Claude and many other LLMs through a unified API
 
+### Vector Store for Semantic Search
+
+DocuCat can create a local vector store using Milvus Lite to enable semantic search across your codebase. This allows DocuCat to find relevant code and documentation more intelligently.
+
+**Initialize a vector store:**
+
+```bash
+# Initialize in current directory
+uv run python init_vector_store.py .
+
+# Initialize in a specific repository
+uv run python init_vector_store.py /path/to/repo
+
+# Force recreation of existing store
+uv run python init_vector_store.py /path/to/repo --force
+
+# Check if vector store exists
+uv run python init_vector_store.py /path/to/repo --check
+
+# Show vector store information
+uv run python init_vector_store.py /path/to/repo --info
+```
+
+Or using the installed command:
+
+```bash
+# Install locally
+uv pip install -e .
+
+# Use the command
+docu-cat-init-store .
+docu-cat-init-store /path/to/repo --force
+```
+
+**What it does:**
+- Creates a `.docucat` directory in your repository
+- Initializes a Milvus Lite vector database
+- Sets up a collection for code/document embeddings
+- Prepares for semantic search capabilities
+
+**Note:** The `.docucat` directory is automatically ignored by git. The vector store uses sentence-transformers for embeddings (384-dimension vectors).
+
 ## Current Features
 
 - ✅ Detects and prints changed files in pull requests
@@ -217,6 +259,8 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - ✅ Posts summary comments to pull requests
 - ✅ Follows developer instructions from PR comments
 - ✅ Manual triggering via PR comments (on-demand execution)
+- ✅ AI-powered comment assistant - answers questions on PRs
+- ✅ Vector store initialization for semantic search (Milvus Lite)
 - ✅ Per-PR configuration via PR description
 - ✅ Local execution mode - analyze commits in any repository
 - ✅ CLI interface with flexible options
@@ -256,13 +300,18 @@ docu-cat/
 ├── CONFIGURATION.md                # Configuration documentation
 ├── __init__.py                     # Package initialization
 ├── main.py                         # CLI entry point for local execution
-├── run_docu_cat_github.py          # Script to run DocuCat
+├── run_docu_cat_github.py          # Entry file for DocuCat GitHub Action
+├── comment_reply_agent.py          # Entry file for comment reply agent
+├── init_vector_store.py            # Entry file for vector store initialization
+├── vector_store.py                 # Vector store management module
 ├── analyzer.py                     # LangGraph workflow for AI analysis
 ├── configuration_expert.py         # AI agent for parsing PR configurations
 ├── comment_instructions_parser.py  # AI agent for parsing developer instructions
 ├── test_configuration_expert.py    # Tests for configuration parser
 ├── test_comment_instructions.py    # Tests for instruction parser
 ├── test_pr_comment.py              # Tests for PR comment formatting
+├── test_comment_trigger.sh         # Tests for comment trigger patterns
+├── test_comment_reply_logic.py     # Tests for comment reply logic
 ├── docs/                           # Documentation
 │   ├── PR_DESCRIPTION_EXAMPLE.md   # Example PR description with config
 │   ├── PR_COMMENT_EXAMPLE.md       # Example PR comments from DocuCat
@@ -286,6 +335,8 @@ docu-cat/
 - LangChain integration for LLM abstraction
 - Integrates with GitHub API for PR analysis
 - OpenRouter provides unified access to multiple LLM providers
+- Milvus Lite for local vector storage and semantic search
+- Sentence Transformers for code/document embeddings
 
 ## How It Works
 

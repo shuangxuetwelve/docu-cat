@@ -30,7 +30,7 @@ DocuCat is in construction. You should follow the task list below to create Docu
 [x] When running as a Github action, the agent should create a comment summarizing the document changes to the pull request. If there is no document change, the agent should still create a comment explaining there is no document change to commit.
 [x] When running as a Github action, the agent should be aware of all comments of a pull request. The tasks of the agent should be subject to the instructions of the comments of the developers.
 [x] DocuCat should be triggered by a new comment mentioning @DocuCat.
-[ ] Add a command to initialize the local vector store and create embeddings for all codes and documents.
+[x] Add a command to initialize the local vector store. The command runs locally and take an argument to the path of the target repository. It creates an empty Milvus Lite store inside the folder .docucat.
 [ ] Change the avatar and name of the automatic commit.
 [ ] More tasks to be added...
 

@@ -98,3 +98,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# DocuCat vector store
+.docucat/

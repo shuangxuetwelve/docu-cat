@@ -11,10 +11,13 @@ dependencies = [
     "langgraph>=0.2.0",
     "langchain-openai>=0.2.0",
     "python-dotenv>=1.0.0",
+    "pymilvus[milvus_lite]>=2.4.0",
+    "sentence-transformers>=2.2.0",
 ]
 
 [project.scripts]
 docu-cat = "main:main"
+docu-cat-init-store = "init_vector_store:main"
 
 [project.optional-dependencies]
 dev = []
