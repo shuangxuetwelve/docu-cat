@@ -10,7 +10,8 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, System
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
-from tools import run_command, read_file, write_file
+from tools import run_command, read_file, write_file, query_vector_store
+from vector_store import check_vector_store
 
 
 class AnalysisState(TypedDict):
@@ -59,9 +60,12 @@ def should_continue(state: AnalysisState) -> Literal["tools", "end"]:
     return "end"
 
 
-def create_analysis_workflow() -> StateGraph:
+def create_analysis_workflow(repo_path: str = ".") -> StateGraph:
     """
     Create the LangGraph workflow for analyzing changes with tool support.
+
+    Args:
+        repo_path: Path to the repository (used to check for vector store availability)
 
     Returns:
         Compiled StateGraph workflow
@@ -80,8 +84,12 @@ def create_analysis_workflow() -> StateGraph:
         temperature=0.7,
     )
 
-    # Create tools list
+    # Create tools list - always include base tools
     tools = [run_command, read_file, write_file]
+    
+    # Add query_vector_store tool if vector store is available
+    if check_vector_store(repo_path):
+        tools.append(query_vector_store)
 
     # Bind tools to LLM
     llm_with_tools = llm.bind_tools(tools)
@@ -145,7 +153,7 @@ def identify_and_update_documents(changed_files: list[str], repo_path: str = "."
         }
 
     try:
-        workflow = create_analysis_workflow()
+        workflow = create_analysis_workflow(repo_path)
 
         # Create initial prompt for code analysis and document identification
         files_list = "\n".join(f"  - {f}" for f in changed_files)
@@ -157,16 +165,24 @@ def identify_and_update_documents(changed_files: list[str], repo_path: str = "."
 {developer_instructions}
 """
 
+        # Build tools description
+        tools_description = """You have access to these tools:
+- run_command: Execute shell commands (git diff, cat, etc.)
+- read_file: Read file contents
+- write_file: Write/update file contents"""
+        
+        # Add query_vector_store tool description if available
+        if check_vector_store(repo_path):
+            tools_description += """
+- query_vector_store: Query the local vector store for relevant code/document chunks"""
+
         initial_prompt = f"""Analyze the following changed files from a code commit and update relevant documentation:
 
 Repository path: {repo_path}
 Changed files:
 {files_list}
 {instructions_section}
-You have access to these tools:
-- run_command: Execute shell commands (git diff, cat, etc.)
-- read_file: Read file contents
-- write_file: Write/update file contents
+{tools_description}
 
 Your task is to:
 
@@ -180,6 +196,7 @@ Your task is to:
    - Common documents to check:
      * README.md - If project structure, features, or usage changed
      * Other .md files as needed
+   - Determine the code comments that are relevant to the changes and query the local vector store for relevant code/document chunks.
 
 3. UPDATE DOCUMENTS:
    For each document that needs updates:
