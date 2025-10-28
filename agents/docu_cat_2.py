@@ -2,16 +2,57 @@ import os
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from tools import run_command, read_file, write_file, query_vector_store
-from langgraph.graph.message import add_messages
-from typing import TypedDict, Annotated, Literal
+from typing import Literal
 from langgraph.prebuilt import ToolNode
+from agents.docu_cat_state import DocuCatState
+from langchain_core.messages import SystemMessage
+from langchain_core.prompts import PromptTemplate
 
 
-class AgentState(TypedDict):
-    """State for the analysis workflow."""
-    changed_files: list[str]
-    repo_path: str
-    messages: Annotated[list, add_messages]
+system_prompt_template = PromptTemplate.from_template("""
+You are an expert technical writer who is responsible for updating documentation and code comments based on code changes.
+
+<instructions>
+You should follow the steps below to complete your task:
+
+1. ANALYZE CODE CHANGES:
+   - Use run_command to inspect what changed in each file (e.g., git diff)
+   - Determine the intent and purpose of the changes
+   - Identify what features/functionality were added/modified
+
+2. IDENTIFY DOCUMENTS AND CODE COMMENTS TO UPDATE:
+   - Determine which documentation files need updates based on the code changes
+   - Common documents to check:
+     * README.md - If project structure, features, or usage changed
+     * Other .md files as needed
+   - You must call the tool query_vector_store to search the local vector store for relevant documentation files and code files, if you are provided with the tool. If you found any comments need updates in code files, you must update the comments.
+
+3. UPDATE DOCUMENTS:
+   For each document or code file that needs updates:
+   a. Use read_file to read the current content
+   b. Determine what sections need to be updated
+   c. Use write_file to write the updated content
+   d. Be precise and only update what's related to the changes.
+
+4. SUMMARIZE:
+   After completing updates, provide a summary listing:
+   - Which documents were updated
+   - What changes were made to each
+   - If no documents needed updates, clearly state "NO_UPDATES_NEEDED"
+</instructions>
+
+<information>
+Repository path: {repo_path}
+Changed files:
+{files_list}
+</information>
+
+<notes>
+Remember to use the repository path as the working_dir when using any tools.
+</notes>
+
+Begin your analysis and document updates now.
+""")
 
 def create_agent_node(llm_with_tools):
     """
@@ -23,16 +64,16 @@ def create_agent_node(llm_with_tools):
     Returns:
         Function that processes the state and calls the LLM
     """
-    def agent(state: AgentState) -> AgentState:
+    def agent(state: DocuCatState) -> DocuCatState:
         """Call the LLM to analyze or use tools."""
         messages = state.get("messages", [])
-        response = llm_with_tools.invoke(messages)
+        response = llm_with_tools.invoke([SystemMessage(content=system_prompt_template.format(repo_path=state.get("repo_path"), files_list=state.get("changed_files")))] + messages)
         print(f"💬 Response: {response.content}")
         return {"messages": [response]}
 
     return agent
 
-def should_continue(state: AgentState) -> Literal["tools", "end"]:
+def should_continue(state: DocuCatState) -> Literal["tools", "end"]:
     """
     Determine if we should continue with tool calls or end.
 
@@ -52,14 +93,9 @@ def should_continue(state: AgentState) -> Literal["tools", "end"]:
     # Otherwise, we're done
     return "end"
 
-
-
 def create_workflow() -> StateGraph:
     """
     Create the LangGraph workflow for analyzing changes with tool support.
-
-    Args:
-        repo_path: Path to the repository (used to check for vector store availability)
 
     Returns:
         Compiled StateGraph workflow
@@ -85,7 +121,7 @@ def create_workflow() -> StateGraph:
     llm_with_tools = llm.bind_tools(tools)
 
     # Create the graph
-    workflow = StateGraph(AgentState)
+    workflow = StateGraph(DocuCatState)
 
     # Add nodes
     workflow.add_node("agent", create_agent_node(llm_with_tools))
@@ -110,4 +146,4 @@ def create_workflow() -> StateGraph:
     # Compile the graph
     return workflow.compile()
 
-agent = create_workflow()
+agent_docu_cat = create_workflow()

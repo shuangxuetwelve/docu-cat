@@ -1,7 +1,8 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "agent": "./agents/docu_cat_2.py:agent"
+    "agent": "./agents/docu_cat_2.py:agent_docu_cat",
+    "docu_cat_local": "./agents/docu_cat_local.py:agent_docu_cat_local"
   },
   "env": "./.env"
 }
