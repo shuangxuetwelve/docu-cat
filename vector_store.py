@@ -27,6 +27,10 @@ DEFAULT_COLLECTION_NAME = "docu_cat_embeddings"
 # Embedding dimension for Gemini
 EMBEDDING_DIM = 256
 
+# Directories to skip when scanning/processing files
+SKIP_DIRS = {'.git', '.docucat', '__pycache__', 'node_modules', '.venv', 'venv', 'env',
+             '.pytest_cache', '.tox', 'dist', 'build', '.egg-info'}
+
 
 def get_vector_store_path(repo_path: str) -> Path:
     """
@@ -280,6 +284,26 @@ def get_supported_extensions() -> Dict[str, str]:
     return extension_map
 
 
+def should_skip_file(file_path: str) -> bool:
+    """
+    Check if a file should be skipped based on its path.
+
+    Args:
+        file_path: Relative path to the file
+
+    Returns:
+        bool: True if file should be skipped, False otherwise
+    """
+    path_parts = Path(file_path).parts
+
+    # Check if any part of the path is in skip directories
+    for part in path_parts:
+        if part in SKIP_DIRS or part.startswith('.'):
+            return True
+
+    return False
+
+
 def scan_repository_files(repo_path: Path) -> tuple[List[tuple], Optional[str]]:
     """
     Scan repository for files with supported extensions.
@@ -293,14 +317,10 @@ def scan_repository_files(repo_path: Path) -> tuple[List[tuple], Optional[str]]:
     supported_extensions = get_supported_extensions()
     supported_files = []
 
-    # Directories to skip
-    skip_dirs = {'.git', '.docucat', '__pycache__', 'node_modules', '.venv', 'venv', 'env',
-                 '.pytest_cache', '.tox', 'dist', 'build', '.egg-info'}
-
     try:
         for root, dirs, files in os.walk(repo_path):
             # Filter out skip directories
-            dirs[:] = [d for d in dirs if d not in skip_dirs and not d.startswith('.')]
+            dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith('.')]
 
             root_path = Path(root)
             for file in files:
@@ -820,6 +840,10 @@ def update_vector_store(repo_path: str) -> Dict:
         processing_errors = []
 
         for changed_file in changed_files:
+            # Skip files in skip directories
+            if should_skip_file(changed_file):
+                continue
+
             # Get file extension
             file_ext = Path(changed_file).suffix.lower()
 
