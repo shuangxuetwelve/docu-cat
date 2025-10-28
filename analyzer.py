@@ -81,7 +81,7 @@ def create_analysis_workflow(repo_path: str = ".") -> StateGraph:
         model="anthropic/claude-haiku-4.5",
         openai_api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
-        max_tokens=4000,
+        max_tokens=4096,
         temperature=0.7,
     )
 
