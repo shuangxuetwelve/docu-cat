@@ -160,8 +160,22 @@ def main():
     print()
 
     # Get repository path from environment or use current directory
-    repo_path = os.getenv('GITHUB_WORKSPACE', os.getcwd())
+    # When running as GitHub Action, TARGET_REPO_PATH is set to the target repository
+    # When running locally, GITHUB_WORKSPACE or current directory is used
+    repo_path = os.getenv('TARGET_REPO_PATH') or os.getenv('GITHUB_WORKSPACE') or os.getcwd()
+    repo_path = str(Path(repo_path).resolve())
     print(f"📂 Repository path: {repo_path}")
+
+    # Verify the path exists and is a git repository
+    if not Path(repo_path).exists():
+        print(f"❌ Repository path does not exist: {repo_path}", file=sys.stderr)
+        sys.exit(1)
+
+    git_dir = Path(repo_path) / '.git'
+    if not git_dir.exists():
+        print(f"❌ Not a git repository: {repo_path}", file=sys.stderr)
+        print(f"   .git directory not found", file=sys.stderr)
+        sys.exit(1)
 
     # Check if GEMINI_API_KEY is set
     if not os.getenv('GEMINI_API_KEY'):

@@ -57,4 +57,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_WORKSPACE: ${{ github.workspace }}/target-repo
+          TARGET_REPO_PATH: ${{ github.workspace }}/target-repo
