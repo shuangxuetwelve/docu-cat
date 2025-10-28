@@ -1,0 +1,60 @@
+# GitHub workflow to keep the vector store in sync with code changes
+# This workflow runs on push events to the main branch and updates the vector store
+#
+# To use this workflow in your repository:
+# 1. Copy this file to .github/workflows/vector-store-sync.yml
+# 2. Add GEMINI_API_KEY to your repository secrets
+# 3. Ensure the main branch allows GitHub Actions to push commits
+
+name: Vector Store Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".docucat/**" # Ignore changes to the vector store itself to prevent infinite loops
+
+jobs:
+  update-vector-store:
+    runs-on: ubuntu-latest
+    name: Initialize or Update Vector Store
+
+    # Required permissions to commit and push
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for git operations
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target-repo
+
+      - name: Checkout DocuCat
+        uses: actions/checkout@v4
+        with:
+          repository: shuangxuetwelve/docu-cat # Update this to match your DocuCat repository
+          path: docu-cat
+          # ref: main  # Optionally specify a version/tag
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install DocuCat dependencies
+        shell: bash
+        run: cd docu-cat && uv sync
+
+      - name: Initialize or Update Vector Store
+        shell: bash
+        run: uv run --directory docu-cat python docu-cat/init_update_store_aga.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}/target-repo
