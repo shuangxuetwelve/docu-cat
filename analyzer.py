@@ -199,11 +199,11 @@ Your task is to:
    - You must call the tool query_vector_store to search the local vector store for relevant documentation files and code files, if you are provided with the tool. If you found any comments need updates in code files, you must update the comments.
 
 3. UPDATE DOCUMENTS:
-   For each document that needs updates:
+   For each document or code file that needs updates:
    a. Use read_file to read the current content
    b. Determine what sections need to be updated
    c. Use write_file to write the updated content
-   d. Be precise and only update what's necessary
+   d. Be precise and only update what's related to the changes.
 
 4. SUMMARIZE:
    After completing updates, provide a summary listing:
