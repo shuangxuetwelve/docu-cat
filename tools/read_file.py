@@ -30,7 +30,7 @@ def read_file(filepath: str, working_dir: str = ".") -> str:
     """
     import os
 
-    print(f"🔍 Reading file: {filepath} in {working_dir}")
+    print(f"🔍 Reading file: {filepath}")
 
     try:
         # Construct full path
