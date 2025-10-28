@@ -10,7 +10,7 @@ import subprocess
 import urllib.request
 import urllib.error
 
-from analyzer import identify_and_update_documents
+from agents import start_docu_cat
 from configuration_expert import get_docucat_configuration
 from comment_instructions_parser import parse_comment_instructions, format_instructions_for_analysis
 
@@ -294,7 +294,7 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str], has_
     Format a PR comment summarizing DocuCat's analysis and actions.
 
     Args:
-        result: Analysis result dictionary from identify_and_update_documents
+        result: Analysis result dictionary from run_docu_cat
         config: DocuCat configuration dictionary
         changed_files: List of changed files in the PR
         has_developer_instructions: Whether developer instructions were provided
@@ -428,37 +428,7 @@ def main():
         print(f"📂 Repository path: {repo_path}")
         print()
 
-        # Fetch and parse developer instructions from PR comments
-        developer_instructions = ""
-        has_developer_instructions = False
-        if token and repository and pr_number:
-            print("💬 Reading developer instructions from PR comments...")
-            comments = get_pr_comments(token, repository, pr_number)
-            if comments:
-                print(f"   Found {len(comments)} comment(s)")
-                instructions_data = parse_comment_instructions(comments)
-
-                # Check if DocuCat should run based on comments
-                if not instructions_data['should_run_docu_cat']:
-                    print(f"   ⏭️  DocuCat instructed to skip via PR comments")
-                    print()
-                    print("=" * 60)
-                    print("⏭️  Skipping DocuCat execution as requested in comments")
-                    print("=" * 60)
-                    sys.exit(0)
-
-                # Process instructions if present
-                if instructions_data['instructions']:
-                    print(f"   ✅ Developer instructions detected")
-                    developer_instructions = format_instructions_for_analysis(instructions_data)
-                    has_developer_instructions = True
-                else:
-                    print(f"   ℹ️  No specific instructions for DocuCat found")
-            else:
-                print(f"   ℹ️  No comments found on this PR")
-            print()
-
-        result = identify_and_update_documents(changed_files, repo_path, developer_instructions)
+        result = start_docu_cat(changed_files, repo_path)
 
         print("📊 Analysis:")
         print("-" * 60)

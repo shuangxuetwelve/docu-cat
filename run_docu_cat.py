@@ -5,7 +5,6 @@ DocuCat - Local execution entry point
 Analyzes recent commits in a repository and detects changed files.
 """
 
-import os
 import sys
 import argparse
 import subprocess
@@ -15,7 +14,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from analyzer import identify_and_update_documents
+from agents import start_docu_cat
 
 
 def get_recent_commits_files(repo_path: Path, commit_count: int) -> list[str]:
@@ -154,7 +153,7 @@ Examples:
         print("=" * 60)
         print()
 
-        result = identify_and_update_documents(changed_files, str(repo_path))
+        result = start_docu_cat(changed_files, str(repo_path))
 
         print("📊 Analysis:")
         print("-" * 60)

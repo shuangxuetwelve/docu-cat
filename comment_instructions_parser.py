@@ -4,7 +4,6 @@ Comment Instructions Parser
 Parses developer instructions from PR comments to guide DocuCat's behavior.
 """
 
-from enum import Enum
 import os
 from typing import Optional, TypedDict
 from langchain_openai import ChatOpenAI

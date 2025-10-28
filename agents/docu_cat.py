@@ -6,7 +6,7 @@ Supports tool calling for executing commands to inspect files.
 import os
 from typing import TypedDict, Annotated, Literal
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -61,7 +61,7 @@ def should_continue(state: AnalysisState) -> Literal["tools", "end"]:
     return "end"
 
 
-def create_analysis_workflow(repo_path: str = ".") -> StateGraph:
+def create_workflow(repo_path: str = ".") -> StateGraph:
     """
     Create the LangGraph workflow for analyzing changes with tool support.
 
@@ -122,7 +122,7 @@ def create_analysis_workflow(repo_path: str = ".") -> StateGraph:
     return workflow.compile()
 
 
-def identify_and_update_documents(changed_files: list[str], repo_path: str = ".") -> dict:
+def start_docu_cat(changed_files: list[str], repo_path: str = ".") -> dict:
     """
     Analyze changed files and identify/update documents that need changes.
 
@@ -154,7 +154,7 @@ def identify_and_update_documents(changed_files: list[str], repo_path: str = "."
         }
 
     try:
-        workflow = create_analysis_workflow(repo_path)
+        workflow = create_workflow(repo_path)
 
         # Create initial prompt for code analysis and document identification
         files_list = "\n".join(f"  - {f}" for f in changed_files)
@@ -209,7 +209,7 @@ Begin your analysis and document updates now."""
         }
 
         # Run the workflow
-        result = workflow.invoke(initial_state)
+        result = workflow.invoke(initial_state, config={"recursion_limit": 100})
 
         # Extract information from messages
         messages = result.get("messages", [])

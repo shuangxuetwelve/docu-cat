@@ -180,13 +180,13 @@ You can run DocuCat locally to analyze recent commits in any repository:
 3. Run DocuCat using uv:
    ```bash
    # Analyze last commit in current directory
-   uv run python main.py
+   uv run python run_docu_cat.py
 
    # Analyze last 5 commits
-   uv run python main.py --count 5
+   uv run python run_docu_cat.py --count 5
 
    # Analyze another repository
-   uv run python main.py --path /path/to/repo --count 10
+   uv run python run_docu_cat.py --path /path/to/repo --count 10
    ```
 
 4. Or install and use the CLI command:
@@ -315,7 +315,7 @@ docu-cat/
 ├── AGENTS.md                       # Project guidelines and task list
 ├── CONFIGURATION.md                # Configuration documentation
 ├── __init__.py                     # Package initialization
-├── main.py                         # CLI entry point for local execution
+├── run_docu_cat.py                         # CLI entry point for local execution
 ├── run_docu_cat_github.py          # Entry file for DocuCat GitHub Action
 ├── comment_reply_agent.py          # Entry file for comment reply agent
 ├── rag.py                          # RAG command for vector store operations
@@ -323,15 +323,12 @@ docu-cat/
 ├── analyzer.py                     # LangGraph workflow for AI analysis
 ├── configuration_expert.py         # AI agent for parsing PR configurations
 ├── comment_instructions_parser.py  # AI agent for parsing developer instructions
-├── test_configuration_expert.py    # Tests for configuration parser
-├── test_comment_instructions.py    # Tests for instruction parser
-├── test_pr_comment.py              # Tests for PR comment formatting
-├── test_comment_trigger.sh         # Tests for comment trigger patterns
-├── test_comment_reply_logic.py     # Tests for comment reply logic
 ├── docs/                           # Documentation
 │   ├── PR_DESCRIPTION_EXAMPLE.md   # Example PR description with config
 │   ├── PR_COMMENT_EXAMPLE.md       # Example PR comments from DocuCat
 │   └── DEVELOPER_INSTRUCTIONS.md   # Guide for developer instructions
+|-- agents/                         # Agents
+|   ├── docu_cat.py                 # The main agent of DocuCat
 ├── tools/                          # LangChain tools for the AI agent
 │   ├── run_command.py              # Command execution tool
 │   ├── read_file.py                # File reading tool
