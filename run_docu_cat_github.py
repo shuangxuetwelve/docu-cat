@@ -289,7 +289,7 @@ Documents updated:
         print("⚠️  The documentation was updated locally but could not be pushed.", file=sys.stderr)
 
 
-def format_pr_comment(result: dict, config: dict, changed_files: list[str], has_developer_instructions: bool = False) -> str:
+def format_pr_comment(result: dict, config: dict, changed_files: list[str]) -> str:
     """
     Format a PR comment summarizing DocuCat's analysis and actions.
 
@@ -297,7 +297,6 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str], has_
         result: Analysis result dictionary from run_docu_cat
         config: DocuCat configuration dictionary
         changed_files: List of changed files in the PR
-        has_developer_instructions: Whether developer instructions were provided
 
     Returns:
         Formatted comment in Markdown
@@ -308,8 +307,6 @@ def format_pr_comment(result: dict, config: dict, changed_files: list[str], has_
     comment += "**Configuration:**\n"
     comment += f"- Enabled: {'✅ Yes' if config['enabled'] else '❌ No'}\n"
     comment += f"- Create Commits: {'✅ Yes' if config['shouldCreateCommits'] else '❌ No'}\n"
-    if has_developer_instructions:
-        comment += f"- Developer Instructions: ✅ Followed\n"
     comment += "\n"
 
     # Add changed files summary
@@ -462,7 +459,7 @@ def main():
             print("=" * 60)
             print()
 
-            comment = format_pr_comment(result, config, changed_files, has_developer_instructions)
+            comment = format_pr_comment(result, config, changed_files)
             post_comment_to_pr(token, repository, pr_number, comment)
             print()
 
