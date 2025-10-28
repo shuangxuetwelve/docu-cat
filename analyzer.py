@@ -34,6 +34,7 @@ def create_agent_node(llm_with_tools):
         """Call the LLM to analyze or use tools."""
         messages = state.get("messages", [])
         response = llm_with_tools.invoke(messages)
+        print(f"💬 Response: {response.content}")
         return {"messages": [response]}
 
     return agent
@@ -121,7 +122,7 @@ def create_analysis_workflow(repo_path: str = ".") -> StateGraph:
     return workflow.compile()
 
 
-def identify_and_update_documents(changed_files: list[str], repo_path: str = ".", developer_instructions: str = "") -> dict:
+def identify_and_update_documents(changed_files: list[str], repo_path: str = ".") -> dict:
     """
     Analyze changed files and identify/update documents that need changes.
 
@@ -158,33 +159,10 @@ def identify_and_update_documents(changed_files: list[str], repo_path: str = "."
         # Create initial prompt for code analysis and document identification
         files_list = "\n".join(f"  - {f}" for f in changed_files)
 
-        # Add developer instructions if provided
-        instructions_section = ""
-        if developer_instructions:
-            instructions_section = f"""
-{developer_instructions}
-"""
+        initial_prompt = f"""You are an expert technical writer who is responsible for updating documentation and code comments based on code changes.
 
-        # Build tools description
-        tools_description = """You have access to these tools:
-- run_command: Execute shell commands (git diff, cat, etc.)
-- read_file: Read file contents
-- write_file: Write/update file contents"""
-        
-        # Add query_vector_store tool description if available
-        if check_vector_store(repo_path):
-            tools_description += """
-- query_vector_store: Query the local vector store for relevant code/document chunks"""
-
-        initial_prompt = f"""Analyze the following changed files from a code commit and update relevant documentation:
-
-Repository path: {repo_path}
-Changed files:
-{files_list}
-{instructions_section}
-{tools_description}
-
-Your task is to:
+<instructions>
+You should follow the steps below to complete your task:
 
 1. ANALYZE CODE CHANGES:
    - Use run_command to inspect what changed in each file (e.g., git diff)
@@ -210,8 +188,17 @@ Your task is to:
    - Which documents were updated
    - What changes were made to each
    - If no documents needed updates, clearly state "NO_UPDATES_NEEDED"
+</instructions>
 
+<information>
+Repository path: {repo_path}
+Changed files:
+{files_list}
+</information>
+
+<notes>
 Remember to specify working_dir="{repo_path}" when using any tools.
+</notes>
 
 Begin your analysis and document updates now."""
 

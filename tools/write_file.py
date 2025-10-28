@@ -31,7 +31,7 @@ def write_file(filepath: str, content: str, working_dir: str = ".") -> str:
     """
     import os
 
-    print(f"🔍 Writing file: {filepath}")
+    print(f"📝 Writing file: {filepath}")
 
     try:
         # Construct full path
