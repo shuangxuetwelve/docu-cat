@@ -191,12 +191,12 @@ Your task is to:
    - Determine the intent and purpose of the changes
    - Identify what features/functionality were added/modified
 
-2. IDENTIFY DOCUMENTS TO UPDATE:
+2. IDENTIFY DOCUMENTS AND CODE COMMENTS TO UPDATE:
    - Determine which documentation files need updates based on the code changes
    - Common documents to check:
      * README.md - If project structure, features, or usage changed
      * Other .md files as needed
-   - Determine the the documents and code comments that are relevant to the changes and query the local vector store for relevant code/document chunks, if you are provided with the tool.
+   - You must call the tool query_vector_store to search the local vector store for relevant documentation files and code files, if you are provided with the tool. If you found any comments need updates in code files, you must update the comments.
 
 3. UPDATE DOCUMENTS:
    For each document that needs updates:
