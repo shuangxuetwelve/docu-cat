@@ -95,6 +95,7 @@ temp/
 
 # LangGraph / AI related
 .langgraph/
+.langgraph_api/
 *.db
 *.sqlite
 *.sqlite3

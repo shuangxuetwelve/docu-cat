@@ -15,7 +15,7 @@ dependencies = [
     "pymilvus[milvus_lite]>=2.4.0",
     "sentence-transformers>=2.2.0",
     "langchain-google-genai>=2.0.0",
-    "langgraph-cli>=0.4.4",
+    "langgraph-cli[inmem]>=0.4.4",
 ]
 
 [project.scripts]
