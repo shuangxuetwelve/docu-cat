@@ -31,6 +31,8 @@ def write_file(filepath: str, content: str, working_dir: str = ".") -> str:
     """
     import os
 
+    print(f"🔍 Writing file: {filepath} in {working_dir}")
+
     try:
         # Construct full path
         full_path = os.path.join(working_dir, filepath)
