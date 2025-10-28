@@ -53,7 +53,7 @@ jobs:
 
       - name: Initialize or Update Vector Store
         shell: bash
-        run: uv run --directory docu-cat python docu-cat/init_update_store_aga.py
+        run: uv run --directory docu-cat python init_update_store_aga.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
