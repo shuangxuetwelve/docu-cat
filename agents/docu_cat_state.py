@@ -19,4 +19,3 @@ class DocuCatState(TypedDict):
     pr_number: Optional[int]
     base_sha: Optional[str]
     head_sha: Optional[str]
-    documents_updated: Optional[list[str]]

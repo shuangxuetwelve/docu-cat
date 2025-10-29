@@ -40,7 +40,16 @@ def commit_and_push_changes(state: DocuCatState):
         working_dir: Directory to run git commands in (defaults to current directory)
     """
     repo_path = state.get("repo_path")
-    documents_updated = state.get("documents_updated")
+    messages = state.get("messages", [])
+    documents_updated = []
+    # Find all write_file tool calls to determine which documents were updated
+    for message in messages:
+        if hasattr(message, "tool_calls") and message.tool_calls:
+            for tool_call in message.tool_calls:
+                if tool_call.get("name") == "write_file":
+                    filepath = tool_call.get("args", {}).get("filepath")
+                    if filepath and filepath not in documents_updated:
+                        documents_updated.append(filepath)
     if not documents_updated:
         return
 
