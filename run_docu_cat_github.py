@@ -12,7 +12,7 @@ def main():
     head_sha = os.getenv('HEAD_SHA')
 
     initial_state = {
-        "repo_path": repository,
+        "repo_path": os.getenv('GITHUB_WORKSPACE', os.getcwd()),
         "changed_files": [],
         "messages": [],
         "token": token,
