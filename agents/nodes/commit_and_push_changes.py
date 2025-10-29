@@ -45,6 +45,12 @@ def commit_and_push_changes(state: DocuCatState):
         return
 
     try:
+        print()
+        print("=" * 60)
+        print("📝 Committing and Pushing Changes")
+        print("=" * 60)
+        print()
+
         # Configure git
         configure_git(repo_path)
 
@@ -128,4 +134,3 @@ Documents updated:
         print()
         print("⚠️  The documentation was updated locally but could not be pushed.", file=sys.stderr)
         return
-        
