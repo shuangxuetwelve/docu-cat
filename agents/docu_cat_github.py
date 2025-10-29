@@ -20,7 +20,6 @@ def should_commit_and_push_changes(state: DocuCatState) -> bool:
     """
     Determine if commit and push changes should be run based on the configuration.
     """
-    print(f"should_commit_and_push_changes: {state.get('config', {}).get('shouldCreateCommits', False)}")
     return state.get("config", {}).get("shouldCreateCommits", False)
 
 def create_workflow() -> StateGraph:
