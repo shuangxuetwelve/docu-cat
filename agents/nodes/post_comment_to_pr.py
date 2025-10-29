@@ -33,7 +33,7 @@ def format_pr_comment(state: DocuCatState) -> str:
 
     # Add analysis section
     if result.get('analysis'):
-        comment += "### 🔍 Analysis\n\n"
+        comment += "# 🔍 Analysis\n\n"
         comment += result['analysis'] + "\n\n"
 
     # Add documentation update summary
