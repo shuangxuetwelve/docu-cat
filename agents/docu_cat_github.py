@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from agents.docu_cat_state import DocuCatState
 from agents.nodes import commit_and_push_changes, get_changed_files_github, post_comment_to_pr, read_pr_configuration
-from agents.docu_cat_2 import agent_docu_cat
+from agents.docu_cat import agent_docu_cat
 
 
 def should_run_docu_cat(state: DocuCatState) -> bool:

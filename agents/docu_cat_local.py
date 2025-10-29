@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from agents.docu_cat_state import DocuCatState
 from agents.nodes import get_recent_commits_files, validate_repository
-from agents.docu_cat_2 import agent_docu_cat
+from agents.docu_cat import agent_docu_cat
 from pathlib import Path
 
 
