@@ -10,6 +10,12 @@ def should_run_docu_cat(state: DocuCatState) -> bool:
     """
     return state.get("config", {}).get("enabled", False)
 
+def should_run_docu_cat_agent(state: DocuCatState) -> bool:
+    """
+    Determine if DocuCat agent should be run based on the configuration.
+    """
+    return len(state.get("changed_files", [])) > 0
+
 def create_workflow() -> StateGraph:
     """
     Create the LangGraph workflow for running DocuCat locally.
@@ -24,7 +30,7 @@ def create_workflow() -> StateGraph:
     # Add nodes
     workflow.add_node("read_pr_configuration", read_pr_configuration)
     workflow.add_node("get_changed_files_github", get_changed_files_github)
-    # workflow.add_node("agent", agent_docu_cat)
+    workflow.add_node("agent", agent_docu_cat)
 
     # Add edges
     workflow.add_edge(START, "read_pr_configuration")
@@ -32,7 +38,11 @@ def create_workflow() -> StateGraph:
         True: "get_changed_files_github",
         False: END,
     })
-    workflow.add_edge("get_changed_files_github", END)
+    workflow.add_conditional_edges("get_changed_files_github", should_run_docu_cat_agent, {
+        True: "agent",
+        False: END,
+    })
+    workflow.add_edge("agent", END)
 
     # Compile the graph
     return workflow.compile()
