@@ -102,7 +102,6 @@ def read_pr_configuration(state: DocuCatState):
         DocuCatConfig dictionary with configuration settings
     """
     pr_description = read_pr_description_from_event()
-    print(f"PR description: {pr_description}")
 
     if not pr_description:
         return { "config": {"enabled": True, "shouldCreateCommits": True} }

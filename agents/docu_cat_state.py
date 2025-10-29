@@ -14,3 +14,8 @@ class DocuCatState(TypedDict):
     commit_count: int
     messages: Annotated[list, add_messages]
     config: Optional[DocuCatConfig]
+    token: Optional[str]
+    repository: Optional[str]
+    pr_number: Optional[int]
+    base_sha: Optional[str]
+    head_sha: Optional[str]
