@@ -15,6 +15,11 @@ def main():
         "repo_path": repository,
         "changed_files": [],
         "messages": [],
+        "token": token,
+        "repository": repository,
+        "pr_number": pr_number,
+        "base_sha": base_sha,
+        "head_sha": head_sha,
     }
 
     result = agent_docu_cat_github.invoke(initial_state)
