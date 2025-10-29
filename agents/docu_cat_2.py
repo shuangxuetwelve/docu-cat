@@ -68,7 +68,7 @@ def create_agent_node(llm_with_tools):
         """Call the LLM to analyze or use tools."""
         messages = state.get("messages", [])
         response = llm_with_tools.invoke([SystemMessage(content=system_prompt_template.format(repo_path=state.get("repo_path"), files_list=state.get("changed_files")))] + messages)
-        print(f"💬 Response: {response.content}")
+        print(f"💬 {response.content}")
         return {"messages": [response]}
 
     return agent
