@@ -20,7 +20,7 @@ DocuCat is a GitHub Action that analyzes pull request changes and helps maintain
    - Get your API key from https://openrouter.ai/keys
    - Paste your OpenRouter API key value
 
-2. Create a workflow file in your repository at `.github/workflows/docu-cat.yml`:
+2. Create a workflow file in your repository at `.github/workflows/trigger-docu-cat.yml`:
 
 ```yaml
 name: DocuCat - Document Generator
