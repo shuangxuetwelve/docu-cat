@@ -1,6 +1,11 @@
 from langgraph.graph.message import add_messages
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, Optional
 
+
+class DocuCatConfig(TypedDict):
+    """DocuCat configuration extracted from PR description."""
+    enabled: bool
+    shouldCreateCommits: bool
 
 class DocuCatState(TypedDict):
     """State for the DocuCat workflow."""
@@ -8,3 +13,4 @@ class DocuCatState(TypedDict):
     repo_path: str
     commit_count: int
     messages: Annotated[list, add_messages]
+    config: Optional[DocuCatConfig]
