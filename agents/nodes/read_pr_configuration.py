@@ -3,7 +3,7 @@ import json
 import re
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
-from agents.docu_cat_state import DocuCatConfig
+from agents.docu_cat_state import DocuCatConfig, DocuCatState
 
 
 def read_pr_description_from_event() -> str | None:
@@ -94,7 +94,7 @@ Rules:
         return {"enabled": True, "shouldCreateCommits": True}
 
 
-def read_pr_configuration():
+def read_pr_configuration(state: DocuCatState):
     """
     Get DocuCat configuration from PR description.
 
