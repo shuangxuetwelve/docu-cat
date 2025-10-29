@@ -54,7 +54,7 @@ def get_changed_files_from_git(base_sha, head_sha):
     except:
         return
 
-def get_changed_files(state: DocuCatState):
+def get_changed_files_github(state: DocuCatState):
     token = state.get("token")
     repository = state.get("repository")
     pr_number = state.get("pr_number")
