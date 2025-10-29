@@ -63,8 +63,10 @@ def get_changed_files_github(state: DocuCatState):
 
     changed_files = []
     if token and repository and pr_number:
+        print(f"Fetching changed files from GitHub API for PR #{pr_number}")
         changed_files = get_changed_files_from_api(token, repository, pr_number)
     elif base_sha and head_sha:
+        print(f"Fetching changed files from git for base SHA {base_sha} and head SHA {head_sha}")
         changed_files = get_changed_files_from_git(base_sha, head_sha)
     else:
         return
