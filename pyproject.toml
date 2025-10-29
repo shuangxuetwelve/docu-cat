@@ -16,6 +16,8 @@ dependencies = [
     "sentence-transformers>=2.2.0",
     "langchain-google-genai>=2.0.0",
     "langgraph-cli[inmem]>=0.4.4",
+    "langfuse>=3.8.1",
+    "langchain>=1.0.2",
 ]
 
 [project.scripts]

@@ -1,6 +1,11 @@
 import os
 from agents import agent_docu_cat_github
+from langfuse.langchain import CallbackHandler
+import uuid
 
+
+langfuse_handler = CallbackHandler()
+langfuse_session_id = uuid.uuid4()
 
 def main():
     """Main entry point for the action."""
@@ -22,7 +27,8 @@ def main():
         "head_sha": head_sha,
     }
 
-    result = agent_docu_cat_github.invoke(initial_state)
+    print(f"Calling the agent with Langfuse session ID: {str(langfuse_session_id)}")
+    result = agent_docu_cat_github.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}})
     print(result)
 
 if __name__ == '__main__':

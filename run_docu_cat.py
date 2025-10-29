@@ -15,7 +15,12 @@ load_dotenv()
 
 from agents.docu_cat_local import agent_docu_cat_local
 from langchain_core.messages import AIMessage
+from langfuse.langchain import CallbackHandler
+import uuid
 
+
+langfuse_handler = CallbackHandler()
+langfuse_session_id = uuid.uuid4()
 
 def main():
     """Main entry point for local DocuCat execution using LangGraph workflow."""
@@ -76,7 +81,8 @@ Examples:
         print("Running DocuCat workflow...")
         print("=" * 60)
         print()
-        result = agent_docu_cat_local.invoke(initial_state)
+        print(f"Calling the agent with Langfuse session ID: {str(langfuse_session_id)}")
+        result = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}})
 
         # Extract results from the workflow
         changed_files = result.get("changed_files", [])
