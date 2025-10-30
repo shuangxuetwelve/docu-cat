@@ -330,29 +330,67 @@ docu-cat/
 
 ## Evaluation
 
-You can run an experiment to evaluate DocuCat using Langfuse using Docker.
+You can run experiments to evaluate DocuCat's performance using Langfuse and Docker. The evaluation measures how accurately DocuCat identifies and updates the correct documentation files.
 
-1. Build the Docker image
+**Prerequisites:**
+
+1. Set up required environment variables:
+  - `OPENROUTER_API_KEY`: Your OpenRouter API key (required for running DocuCat)
+  - `GEMINI_API_KEY`: Your Gemini API key (required if using vector store)
+  - Langfuse API keys if you want to bring your own Langfuse dataset
+    - `LANGFUSE_PUBLIC_KEY`: Your Langfuse public key
+    - `LANGFUSE_SECRET_KEY`: Your Langfuse secret key
+    - `LANGFUSE_HOST`: Your Langfuse host URL (optional, defaults to Langfuse cloud)
+
+Place the API keys in .env.
+
+2. Prepare a dataset in Langfuse with test cases, or use the local dataset included in the Docker image.
+
+**Running the Evaluation:**
+
+1. **Build the Docker image:**
 
 ```bash
-docker image build -t docu-cat .
+docker build -t docu-cat .
 ```
 
-2. Generate the container
+This builds a Docker image that includes:
+- DocuCat source code at `/home/docu-cat`
+- Test dataset at `/home/datasets`
+
+2. **Run an interactive container:**
 
 ```bash
-docker container run --rm -it docu-cat /bin/bash
+docker run --rm -it docu-cat /bin/bash
 ```
 
-This command maps the shell in Docker into your current shell.
+This command starts an interactive bash shell inside the container with your environment variables.
 
-3. Run the experiment
+3. **Run the experiment inside the container:**
 
 ```bash
-uv run run_experiment.py --path /home/datasets --local
+# Run experiment with the local dataset
+uv run run_experiment.py --path /home/datasets
 ```
 
-This commands run the local dataset instead of the Langfuse dataset with the option `--local`.
+**What the evaluation does:**
+
+- Runs DocuCat on each test case in the dataset
+- Compares the documents DocuCat updates against expected documents
+- Calculates an F1 score for each test case
+- Aggregates results across all test cases
+- Reports evaluation metrics to Langfuse
+
+**Evaluation Metrics:**
+
+The experiment calculates **F1 Score** to measure DocuCat's accuracy:
+- **Precision**: Percentage of documents DocuCat updated that should have been updated
+- **Recall**: Percentage of documents that should have been updated that DocuCat found
+- **F1 Score**: Harmonic mean of precision and recall
+
+**Viewing Results:**
+
+After the experiment completes, the experiment results will be printed in the console. If you use Langfuse, you can view the results in the Langfuse dashboard at your configured `LANGFUSE_HOST`.
 
 ## License
 
