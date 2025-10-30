@@ -328,9 +328,31 @@ docu-cat/
         └── trigger-vector-store-sync.yml     # Comment-triggered workflow
 ```
 
-## Contributing
+## Evaluation
 
-DocuCat is currently under construction.
+You can run an experiment to evaluate DocuCat using Langfuse using Docker.
+
+1. Build the Docker image
+
+```bash
+docker image build -t docu-cat .
+```
+
+2. Generate the container
+
+```bash
+docker container run --rm -it docu-cat /bin/bash
+```
+
+This command maps the shell in Docker into your current shell.
+
+3. Run the experiment
+
+```bash
+uv run run_experiment.py --path /home/datasets --local
+```
+
+This commands run the local dataset instead of the Langfuse dataset with the option `--local`.
 
 ## License
 
