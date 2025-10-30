@@ -25,42 +25,8 @@ import uuid
 langfuse_handler = CallbackHandler()
 langfuse_session_id = uuid.uuid4()
 
-def main(_repo_path: Optional[str] = None):
-    """Main entry point for local DocuCat execution using LangGraph workflow."""
-    parser = argparse.ArgumentParser(
-        description='DocuCat - Analyze recent commits and detect changed files',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Analyze last 5 commits in current directory
-  docu-cat2 --count 5
-
-  # Analyze last 10 commits in a specific repository
-  docu-cat2 --path /path/to/repo --count 10
-
-  # Analyze last commit in another repository
-  docu-cat2 -p ../other-repo -c 1
-        """
-    )
-
-    parser.add_argument(
-        '-p', '--path',
-        type=str,
-        default='.',
-        help='Path to the repository (default: current directory)'
-    )
-
-    parser.add_argument(
-        '-c', '--count',
-        type=int,
-        default=1,
-        help='Number of recent commits to analyze (default: 1)'
-    )
-
-    args = parser.parse_args()
-
-    # Convert to absolute path
-    repo_path = _repo_path or args.path
+def run_docu_cat(repo_path: str, count: int = 1):
+  # Convert to absolute path
     repo_path = Path(repo_path).resolve()
 
     print("=" * 60)
@@ -68,13 +34,13 @@ Examples:
     print("=" * 60)
     print()
     print(f"📂 Repository: {repo_path}")
-    print(f"📊 Analyzing last {args.count} commit(s)")
+    print(f"📊 Analyzing last {count} commit(s)")
     print()
 
     # Create initial state for the workflow
     initial_state = {
         "repo_path": str(repo_path),
-        "commit_count": args.count,
+        "commit_count": count,
         "changed_files": [],
         "messages": [],
     }
@@ -141,6 +107,42 @@ Examples:
     print("=" * 60)
 
     return result
+
+def main(_repo_path: Optional[str] = None):
+    """Main entry point for local DocuCat execution using LangGraph workflow."""
+    parser = argparse.ArgumentParser(
+        description='DocuCat - Analyze recent commits and detect changed files',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Analyze last 5 commits in current directory
+  docu-cat2 --count 5
+
+  # Analyze last 10 commits in a specific repository
+  docu-cat2 --path /path/to/repo --count 10
+
+  # Analyze last commit in another repository
+  docu-cat2 -p ../other-repo -c 1
+        """
+    )
+
+    parser.add_argument(
+        '-p', '--path',
+        type=str,
+        default='.',
+        help='Path to the repository (default: current directory)'
+    )
+
+    parser.add_argument(
+        '-c', '--count',
+        type=int,
+        default=1,
+        help='Number of recent commits to analyze (default: 1)'
+    )
+
+    args = parser.parse_args()
+
+    return run_docu_cat(args.path, args.count)
 
 
 if __name__ == '__main__':
