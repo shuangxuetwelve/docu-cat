@@ -8,6 +8,7 @@ Analyzes recent commits in a repository and detects changed files using LangGrap
 import sys
 import argparse
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 from agents.utils import getResultFromState
@@ -24,7 +25,7 @@ import uuid
 langfuse_handler = CallbackHandler()
 langfuse_session_id = uuid.uuid4()
 
-def main():
+def main(_repo_path: Optional[str] = None):
     """Main entry point for local DocuCat execution using LangGraph workflow."""
     parser = argparse.ArgumentParser(
         description='DocuCat - Analyze recent commits and detect changed files',
@@ -59,7 +60,8 @@ Examples:
     args = parser.parse_args()
 
     # Convert to absolute path
-    repo_path = Path(args.path).resolve()
+    repo_path = _repo_path or args.path
+    repo_path = Path(repo_path).resolve()
 
     print("=" * 60)
     print("DocuCat - Local Mode")
@@ -137,6 +139,8 @@ Examples:
         sys.exit(1)
 
     print("=" * 60)
+
+    return result
 
 
 if __name__ == '__main__':
