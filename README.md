@@ -58,6 +58,8 @@ jobs:
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
 ```
 
+**Example workflow file:** See [.github/workflow-examples/trigger-docucat.yml](.github/workflow-examples/trigger-docucat.yml)
+
 3. Create an `AGENTS.md` file in your repository root to help DocuCat understand your codebase structure (optional but recommended).
 
 4. Open a pull request and DocuCat will automatically:
@@ -159,7 +161,7 @@ You can run DocuCat locally to analyze recent commits in any repository:
 - Store it in a `.env` file (recommended) or set as an environment variable
 - OpenRouter provides access to Claude and many other LLMs through a unified API
 
-### Vector Store for Semantic Search
+### Using Vector Store for Semantic Search Locally
 
 DocuCat can create a local vector store using Milvus Lite to enable semantic search across your codebase. This allows DocuCat to find relevant code and documentation more intelligently.
 
@@ -214,6 +216,92 @@ rag --info
 
 **Supported file types:**
 Python, JavaScript, TypeScript, Java, C/C++, C#, Go, Rust, Ruby, PHP, Swift, Kotlin, Scala, R, Objective-C, Markdown, LaTeX, HTML, XML, JSON, YAML, Bash, PowerShell, SQL, and plain text.
+
+### Using Vector Store for Semantic Search on Github
+
+You can set up a GitHub workflow to automatically initialize or update the vector store whenever changes are pushed to your main branch. This ensures DocuCat always has access to up-to-date embeddings for semantic search.
+
+**Prerequisites:**
+- Add `GEMINI_API_KEY` as a repository secret:
+  - Go to your repository Settings → Secrets and variables → Actions
+  - Create a new secret named `GEMINI_API_KEY`
+  - Get your API key from https://ai.google.dev/gemini-api/docs/api-key
+  - Paste your Gemini API key value
+
+**Setup:**
+
+1. Copy the example workflow to your repository at `.github/workflows/vector-store-sync.yml`:
+
+```yaml
+name: Vector Store Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".docucat/**" # Ignore changes to the vector store itself
+
+jobs:
+  update-vector-store:
+    runs-on: ubuntu-latest
+    name: Initialize or Update Vector Store
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: target-repo
+
+      - name: Checkout DocuCat
+        uses: actions/checkout@v4
+        with:
+          repository: shuangxuetwelve/docu-cat
+          path: docu-cat
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install DocuCat dependencies
+        shell: bash
+        run: cd docu-cat && uv sync
+
+      - name: Initialize or Update Vector Store
+        shell: bash
+        run: uv run --directory docu-cat python init_update_store_aga.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_REPO_PATH: ${{ github.workspace }}/target-repo
+```
+
+**Example workflow file:** See [.github/workflow-examples/trigger-vector-store-sync.yml](.github/workflow-examples/trigger-vector-store-sync.yml)
+
+2. The workflow will automatically:
+   - **On first run**: Initialize the vector store with embeddings for all code and documents
+   - **On subsequent runs**: Update only the changed files since the last update
+   - Commit and push the vector store changes back to the repository
+
+**What happens:**
+- When you merge a pull request to main, the workflow triggers
+- It checks if `.docucat/store.json` exists
+  - **If not**: Initializes a new vector store with all repository files
+  - **If yes**: Updates only the files that changed since the last SHA recorded in `store.json`
+- Creates a commit with the updated vector store
+- Pushes the commit to the main branch
+- DocuCat can then use the vector store for semantic search in future pull requests
+
+**Note:** The workflow uses `paths-ignore: [".docucat/**"]` to prevent infinite loops when the vector store itself is updated.
 
 ### Project Structure
 
