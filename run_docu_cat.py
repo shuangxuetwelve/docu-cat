@@ -62,7 +62,7 @@ Examples:
     repo_path = Path(args.path).resolve()
 
     print("=" * 60)
-    print("DocuCat - Local Mode (Version 2)")
+    print("DocuCat - Local Mode")
     print("=" * 60)
     print()
     print(f"📂 Repository: {repo_path}")
@@ -90,7 +90,7 @@ Examples:
         result = getResultFromState(state)
         changed_files = result.get("changed_files")
         analysis = result.get("analysis")
-        documents_updated = result.get("documents_updated")     
+        documents_updated = result.get("documents_updated")
 
         # Print changed files
         if changed_files:
