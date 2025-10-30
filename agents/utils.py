@@ -1,25 +1,28 @@
 from langchain_core.messages import AIMessage
+from agents.docu_cat_state import DocuCatState
 
 
-def getResultFromMessages(messages: list) -> str:
+def getResultFromState(state: DocuCatState) -> str:
     """
-    Get the result from the messages.
+    Get the result from the state.
 
     Args:
-        messages: List of messages
+        state: DocuCat state
 
     Returns:
-        Result from the messages
+        Result from the state
     """
     analysis = ""
     documents_updated = []
     no_updates_needed = False
+    messages = state.get("messages", [])
 
     # Find the final AI response
     for message in reversed(messages):
         if isinstance(message, AIMessage) and message.content:
             analysis = message.content
             break
+
 
     # Check if agent indicated no updates needed
     if "NO_UPDATES_NEEDED" in analysis:

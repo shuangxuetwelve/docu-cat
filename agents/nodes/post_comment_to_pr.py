@@ -4,7 +4,7 @@ import sys
 
 from langchain_core.messages import AIMessage
 from agents.docu_cat_state import DocuCatState
-from agents.utils import getResultFromMessages
+from agents.utils import getResultFromState
 
 def format_pr_comment(state: DocuCatState) -> str:
     """
@@ -18,8 +18,7 @@ def format_pr_comment(state: DocuCatState) -> str:
     """
     changed_files = state.get("changed_files")
     config = state.get("config", {})
-    messages = state.get("messages", [])
-    result = getResultFromMessages(messages)
+    result = getResultFromState(state)
     
     comment = "## 🐱 DocuCat Summary\n\n"
 
