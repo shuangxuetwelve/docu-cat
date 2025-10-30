@@ -1,8 +1,16 @@
+from typing import TypedDict
 from langchain_core.messages import AIMessage
 from agents.docu_cat_state import DocuCatState
 
 
-def getResultFromState(state: DocuCatState) -> str:
+class DocuCatResult(TypedDict):
+    """Result from the agents' states."""
+    changed_files: list[str]
+    analysis: str
+    documents_updated: list[str]
+    no_updates_needed: bool
+
+def getResultFromState(state: DocuCatState) -> DocuCatResult:
     """
     Get the result from the state.
 
@@ -12,6 +20,7 @@ def getResultFromState(state: DocuCatState) -> str:
     Returns:
         Result from the state
     """
+    changed_files = state.get("changed_files")
     analysis = ""
     documents_updated = []
     no_updates_needed = False
@@ -38,6 +47,7 @@ def getResultFromState(state: DocuCatState) -> str:
                         documents_updated.append(filepath)
     
     return {
+        "changed_files": changed_files,
         "analysis": analysis if analysis else "No analysis available",
         "documents_updated": documents_updated,
         "no_updates_needed": no_updates_needed

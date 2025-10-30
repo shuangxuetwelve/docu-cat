@@ -10,6 +10,8 @@ import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 
+from agents.utils import getResultFromState
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -82,11 +84,13 @@ Examples:
         print("=" * 60)
         print()
         print(f"Calling the agent with Langfuse session ID: {str(langfuse_session_id)}")
-        result = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}})
+        state = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}})
 
-        # Extract results from the workflow
-        changed_files = result.get("changed_files", [])
-        messages = result.get("messages", [])
+        # Extract results from the agent's state
+        result = getResultFromState(state)
+        changed_files = result.get("changed_files")
+        analysis = result.get("analysis")
+        documents_updated = result.get("documents_updated")     
 
         # Print changed files
         if changed_files:
@@ -98,19 +102,12 @@ Examples:
             print("\n📝 No changed files detected.\n")
 
         # Analyze and display results
-        if changed_files and messages:
+        if changed_files:
             print("=" * 60)
             print("🤖 Analysis Results")
             print("   (Claude Haiku 4.5 via OpenRouter)")
             print("=" * 60)
             print()
-
-            # Find the final AI response
-            analysis = ""
-            for message in reversed(messages):
-                if isinstance(message, AIMessage) and message.content:
-                    analysis = message.content
-                    break
 
             if analysis:
                 print("📊 Analysis:")
@@ -122,16 +119,6 @@ Examples:
                 if "NO_UPDATES_NEEDED" in analysis:
                     print("✅ No documents needed updates.")
                 else:
-                    # Find all write_file tool calls to determine which documents were updated
-                    documents_updated = []
-                    for message in messages:
-                        if hasattr(message, "tool_calls") and message.tool_calls:
-                            for tool_call in message.tool_calls:
-                                if tool_call.get("name") == "write_file":
-                                    filepath = tool_call.get("args", {}).get("filepath")
-                                    if filepath and filepath not in documents_updated:
-                                        documents_updated.append(filepath)
-
                     if documents_updated:
                         print("📝 Documents Updated:")
                         print("-" * 60)
