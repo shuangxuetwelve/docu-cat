@@ -26,7 +26,7 @@ langfuse_handler = CallbackHandler()
 langfuse_session_id = uuid.uuid4()
 
 def run_docu_cat(repo_path: str, count: int = 1):
-  # Convert to absolute path
+    # Convert to absolute path
     repo_path = Path(repo_path).resolve()
 
     print("=" * 60)
