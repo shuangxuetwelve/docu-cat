@@ -370,7 +370,7 @@ This command starts an interactive bash shell inside the container with your env
 
 ```bash
 # Run experiment with the local dataset
-uv run run_experiment.py --path /home/datasets
+uv run run_experiment.py --path /home/datasets --local
 ```
 
 **What the evaluation does:**
