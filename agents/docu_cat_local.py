@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from agents.docu_cat_state import DocuCatState
 from agents.nodes import get_recent_commits_files, validate_repository
-from agents.docu_cat import agent_docu_cat
+from agents.docu_cat import agent_docu_cat, agent_docu_cat_no_embedding
 from pathlib import Path
 
 
@@ -27,7 +27,7 @@ def validate_repository(state: DocuCatState) -> bool:
 
     return True
 
-def create_workflow() -> StateGraph:
+def create_workflow(with_embedding: bool = True) -> StateGraph:
     """
     Create the LangGraph workflow for running DocuCat locally.
 
@@ -40,7 +40,7 @@ def create_workflow() -> StateGraph:
 
     # Add nodes
     workflow.add_node("get_recent_commits_files", get_recent_commits_files)
-    workflow.add_node("agent", agent_docu_cat)
+    workflow.add_node("agent", agent_docu_cat if with_embedding else agent_docu_cat_no_embedding)
 
     # Add edges
     workflow.add_conditional_edges(START, validate_repository, {
@@ -52,4 +52,5 @@ def create_workflow() -> StateGraph:
     # Compile the graph
     return workflow.compile()
 
-agent_docu_cat_local = create_workflow()
+agent_docu_cat_local = create_workflow(with_embedding=True)
+agent_docu_cat_local_no_embedding = create_workflow(with_embedding=False)

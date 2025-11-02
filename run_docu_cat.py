@@ -16,7 +16,7 @@ from agents.utils import getResultFromState
 # Load environment variables from .env file
 load_dotenv()
 
-from agents.docu_cat_local import agent_docu_cat_local
+from agents.docu_cat_local import agent_docu_cat_local, agent_docu_cat_local_no_embedding
 from langchain_core.messages import AIMessage
 from langfuse.langchain import CallbackHandler
 import uuid
@@ -25,7 +25,7 @@ import uuid
 langfuse_handler = CallbackHandler()
 langfuse_session_id = uuid.uuid4()
 
-def run_docu_cat(repo_path: str, count: int = 1):
+def run_docu_cat(repo_path: str, count: int = 1, with_embedding: bool = True):
     # Convert to absolute path
     repo_path = Path(repo_path).resolve()
 
@@ -52,7 +52,8 @@ def run_docu_cat(repo_path: str, count: int = 1):
         print("=" * 60)
         print()
         print(f"Calling the agent with Langfuse session ID: {str(langfuse_session_id)}")
-        state = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}, "recursion_limit":50})
+        agent = agent_docu_cat_local if with_embedding else agent_docu_cat_local_no_embedding
+        state = agent.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}, "recursion_limit":50})
 
         # Extract results from the agent's state
         result = getResultFromState(state)

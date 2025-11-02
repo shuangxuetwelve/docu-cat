@@ -93,7 +93,7 @@ def should_continue(state: DocuCatState) -> Literal["tools", "end"]:
     # Otherwise, we're done
     return "end"
 
-def create_workflow() -> StateGraph:
+def create_workflow(with_embedding: bool = True) -> StateGraph:
     """
     Create the LangGraph workflow for analyzing changes with tool support.
 
@@ -115,7 +115,9 @@ def create_workflow() -> StateGraph:
     )
 
     # Create tools list - always include base tools
-    tools = [run_command, read_file, write_file, query_vector_store]
+    tools = [run_command, read_file, write_file]
+    if with_embedding:
+        tools.append(query_vector_store)
 
     # Bind tools to LLM
     llm_with_tools = llm.bind_tools(tools)
@@ -146,4 +148,5 @@ def create_workflow() -> StateGraph:
     # Compile the graph
     return workflow.compile()
 
-agent_docu_cat = create_workflow()
+agent_docu_cat = create_workflow(with_embedding=True)
+agent_docu_cat_no_embedding = create_workflow(with_embedding=False)
