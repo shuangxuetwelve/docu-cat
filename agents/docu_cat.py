@@ -41,6 +41,11 @@ You should follow the steps below to complete your task:
    - If no documents needed updates, clearly state "NO_UPDATES_NEEDED"
 </instructions>
 
+<requirements>
+- Do not add new comment blocks to the codes if they do not originally exist. For example, if the code does not have a JSDoc comment block, do not add one.
+- Focus on updating, removing or completing the documentation and code comments that are related to the changes, instead of adding new documentation and code comments.
+</requirements>
+
 <information>
 Repository path: {repo_path}
 Changed files:
@@ -48,7 +53,7 @@ Changed files:
 </information>
 
 <notes>
-Remember to use the repository path as the working_dir when using any tools.
+- Remember to use the repository path as the working_dir when using any tools.
 </notes>
 
 Begin your analysis and document updates now.
