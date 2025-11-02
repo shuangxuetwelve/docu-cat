@@ -34,7 +34,7 @@ def main():
     }
 
     try:
-        state = agent_docu_cat_github.invoke(initial_state)
+        state = agent_docu_cat_github.invoke(initial_state, config={"recursion_limit":50})
 
         # Extract results from the agent's state
         result = getResultFromState(state)

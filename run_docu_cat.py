@@ -52,7 +52,7 @@ def run_docu_cat(repo_path: str, count: int = 1):
         print("=" * 60)
         print()
         print(f"Calling the agent with Langfuse session ID: {str(langfuse_session_id)}")
-        state = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}})
+        state = agent_docu_cat_local.invoke(initial_state, config={"callbacks": [langfuse_handler], "metadata": {"langfuse_session_id": str(langfuse_session_id)}, "recursion_limit":50})
 
         # Extract results from the agent's state
         result = getResultFromState(state)

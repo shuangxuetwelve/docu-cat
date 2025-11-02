@@ -6,7 +6,7 @@ from experiment import calculate_f1_score
 
 
 LOCAL_DATASET = [
-  {"input": "docu-cat-dataset-next-js", "expected_output": {"documents_updated": ["README.md", "docs/COMPONENTS.md", "components/TextButton.tsx", "components/ButtonSmall.tsx"]}},
+  {"input": "docu-cat-dataset-next-js", "expected_output": "1. **docs/COMPONENTS.md**\n   - Changed section heading from \"## DocuCatButton\" to \"## ButtonBase\"\n   - Updated import statement from `import { DocuCatButton }` to `import { ButtonBase }`\n   - Updated all code examples to use `<ButtonBase>` instead of `<DocuCatButton>`\n   - Updated description to reflect the new component name\n\n2. **README.md**\n   - Updated component reference in the documentation list from `[DocuCatButton](components/DocuCatButton.tsx)` to `[ButtonBase](components/ButtonBase.tsx)`\n\n3. **components/ButtonSmall.tsx**\n   - Updated JSDoc comment: Changed \"It inherits all the features of the DocuCatButton component\" to \"It inherits all the features of the ButtonBase component\"\n\n4. **components/TextButton.tsx**\n   - Updated TODO comment: Changed \"use the DocuCatButton component as a base\" to \"use the ButtonBase component as a base\""},
 ]
 
 def main():
